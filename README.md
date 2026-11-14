@@ -71,3 +71,26 @@ Barcha modullar (Users, Listings, Favorites, Reports, Matching) bo'yicha birlik 
 ```bash
 python manage.py test
 ```
+
+---
+
+## 🌐 Render.com'ga deploy qilish (Production)
+
+Render.com da Web Service yaratishda quyidagi sozlamalardan foydalaning:
+* **Environment:** Python 3
+* **Build Command:**
+  ```bash
+  pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
+  ```
+* **Start Command:**
+  ```bash
+  gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+  ```
+* **Environment Variables:**
+  * `DEBUG`: `False`
+  * `SECRET_KEY`: `maxfiy-kalit`
+  * `DATABASE_URL`: `Render PostgreSQL Internal Connection String`
+  * `ALLOWED_HOSTS`: `.onrender.com,localhost,127.0.0.1`
+  * `ADMIN_URL`: `secret-admin/` (yoki o'zingiz istagan maxfiy yo'l)
+
+
