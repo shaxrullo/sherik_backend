@@ -1,0 +1,2965 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Sherik Topish API",
+        "version": "1.0.0",
+        "description": "Talabalar va ishlovchilar uchun uy-joy va sherik topish platformasi backend API (O'zbekiston)"
+    },
+    "paths": {
+        "/api/v1/admin/stats/": {
+            "get": {
+                "operationId": "v1_admin_stats_retrieve",
+                "description": "Foydalanuvchilar, e'lonlar, moderatsiya va shikoyatlar bo'yicha umumiy statistik ma'lumotlar.",
+                "summary": "Platforma statistikasi (Faqat Moderator / Admin uchun)",
+                "tags": [
+                    "Admin Moderatsiya"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistika muvaffaqiyatli qaytarildi"
+                    },
+                    "403": {
+                        "description": "Ruxsat berilmagan (faqat is_staff foydalanuvchilar)"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/google/": {
+            "post": {
+                "operationId": "v1_auth_google_create",
+                "description": "Google OAuth2 ID tokenini yuborib JWT access va refresh tokenlarini olish.",
+                "summary": "Google orqali tizimga kirish / ro'yxatdan o'tish",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GoogleAuth"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GoogleAuth"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GoogleAuth"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tizimga muvaffaqiyatli kirildi"
+                    },
+                    "400": {
+                        "description": "Google token xatosi"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/lifestyle/": {
+            "get": {
+                "operationId": "v1_auth_lifestyle_retrieve",
+                "description": "Foydalanuvchi turmush tarzi parametrlari (chekish, tozalik, hayvonlar, uyqu rejimi).",
+                "summary": "Shaxsiy turmush tarzi afzalliklarini ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LifestylePreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_auth_lifestyle_update",
+                "description": "Foydalanuvchi turmush tarzi parametrlari (chekish, tozalik, hayvonlar, uyqu rejimi).",
+                "summary": "Shaxsiy turmush tarzi afzalliklarini ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LifestylePreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_auth_lifestyle_partial_update",
+                "description": "Foydalanuvchi turmush tarzi parametrlari (chekish, tozalik, hayvonlar, uyqu rejimi).",
+                "summary": "Shaxsiy turmush tarzi afzalliklarini ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedLifestylePreference"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedLifestylePreference"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedLifestylePreference"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LifestylePreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login/": {
+            "post": {
+                "operationId": "v1_auth_login_create",
+                "description": "Email va parol orqali tizimga kirish.",
+                "summary": "Tizimga kirish (JWT token olish)",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomTokenObtainPair"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomTokenObtainPair"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CustomTokenObtainPair"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomTokenObtainPair"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me/": {
+            "get": {
+                "operationId": "v1_auth_me_retrieve",
+                "description": "Avtorizatsiyadan o'tgan foydalanuvchining shaxsiy ma'lumotlarini olish va yangilash.",
+                "summary": "Shaxsiy profilni ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserProfile"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_auth_me_update",
+                "description": "Avtorizatsiyadan o'tgan foydalanuvchining shaxsiy ma'lumotlarini olish va yangilash.",
+                "summary": "Shaxsiy profilni ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserProfile"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserProfile"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserProfile"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserProfile"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_auth_me_partial_update",
+                "description": "Avtorizatsiyadan o'tgan foydalanuvchining shaxsiy ma'lumotlarini olish va yangilash.",
+                "summary": "Shaxsiy profilni ko'rish va tahrirlash",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserProfile"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserProfile"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserProfile"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserProfile"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register/": {
+            "post": {
+                "operationId": "v1_auth_register_create",
+                "description": "Email va parol orqali yangi hisob yaratadi va JWT tokenlarini qaytaradi.",
+                "summary": "Yangi foydalanuvchini ro'yxatdan o'tkazish",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserRegistration"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserRegistration"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserRegistration"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi"
+                    },
+                    "400": {
+                        "description": "Validatsiya xatosi"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/token/refresh/": {
+            "post": {
+                "operationId": "v1_auth_token_refresh_create",
+                "description": "Takes a refresh type JSON web token and returns an access type JSON web\ntoken if the refresh token is valid.",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefresh"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefresh"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefresh"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenRefresh"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/favorites/": {
+            "get": {
+                "operationId": "v1_favorites_list",
+                "description": "Faqat avtorizatsiyadan o'tgan foydalanuvchining o'z sevimli e'lonlarini qaytaradi.",
+                "summary": "Foydalanuvchining sevimli e'lonlari ro'yxati",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Favorites"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedFavoriteListList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/favorites/{listing_id}/": {
+            "delete": {
+                "operationId": "v1_favorites_destroy",
+                "description": "E'lon ID si bo'yicha uni sevimlilar ro'yxatidan o'chiradi.",
+                "summary": "Sevimlilardan e'lonni olib tashlash",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "listing_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Favorites"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "E'lon sevimlilardan olib tashlandi"
+                    },
+                    "404": {
+                        "description": "Sevimli e'lon topilmadi"
+                    }
+                }
+            }
+        },
+        "/api/v1/favorites/add/": {
+            "post": {
+                "operationId": "v1_favorites_add_create",
+                "description": "E'lonni sevimlilar ro'yxatiga qo'shish.",
+                "summary": "Sevimlilarga e'lon qo'shish",
+                "tags": [
+                    "Favorites"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "E'lon sevimlilarga qo'shildi"
+                    },
+                    "400": {
+                        "description": "E'lon topilmadi yoki noto'g'ri so'rov"
+                    }
+                }
+            }
+        },
+        "/api/v1/favorites/toggle/": {
+            "post": {
+                "operationId": "v1_favorites_toggle_create",
+                "description": "Agar e'lon sevimlilarda bo'lsa o'chiradi, bo'lmasa qo'shadi.",
+                "summary": "Sevimlilar holatini o'zgartirish (Toggle: qo'shish/o'chirish)",
+                "tags": [
+                    "Favorites"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteAction"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Holat muvaffaqiyatli o'zgartirildi"
+                    }
+                }
+            }
+        },
+        "/api/v1/listings/": {
+            "get": {
+                "operationId": "v1_listings_list",
+                "description": "Faol va tasdiqlangan (approved) e'lonlar ro'yxati. Filtrlar, qidiruv va sahifalash mavjud.",
+                "summary": "E'lonlar ro'yxati va yangi e'lon yaratish",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "city",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Shahar ID"
+                    },
+                    {
+                        "in": "query",
+                        "name": "city_slug",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Shahar slugi"
+                    },
+                    {
+                        "in": "query",
+                        "name": "district",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Tuman ID"
+                    },
+                    {
+                        "in": "query",
+                        "name": "gender_preference",
+                        "schema": {
+                            "type": "string",
+                            "title": "Jinsi bo'yicha talab",
+                            "enum": [
+                                "any",
+                                "female",
+                                "male"
+                            ]
+                        },
+                        "description": "Jins talabi\n\n* `male` - Faqat erkaklar / yigitlar\n* `female` - Faqat ayollar / qizlar\n* `any` - Farqi yo'q"
+                    },
+                    {
+                        "in": "query",
+                        "name": "listing_type",
+                        "schema": {
+                            "type": "string",
+                            "title": "E'lon turi",
+                            "enum": [
+                                "have_room",
+                                "need_room"
+                            ]
+                        },
+                        "description": "E'lon turi\n\n* `have_room` - Joy bor (Sherik kerak)\n* `need_room` - Joy kerak (Ijara qidiryapti)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_price",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maksimal narx"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_capacity",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Minimal joylar soni"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_price",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimal narx"
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedListingListList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_listings_create",
+                "description": "Faol va tasdiqlangan (approved) e'lonlar ro'yxati. Filtrlar, qidiruv va sahifalash mavjud.",
+                "summary": "E'lonlar ro'yxati va yangi e'lon yaratish",
+                "tags": [
+                    "Listings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingCreateUpdate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/listings/{listing_id}/photos/": {
+            "post": {
+                "operationId": "v1_listings_photos_create",
+                "description": "Faqat e'lon egasi o'z e'loniga rasm yuklay oladi.",
+                "summary": "E'longa rasm yuklash",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "listing_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingPhotoUpload"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingPhotoUpload"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingPhotoUpload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingPhotoUpload"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/listings/{id}/": {
+            "get": {
+                "operationId": "v1_listings_retrieve",
+                "description": "Faqat e'lon egasi uni tahrirlashi (PUT, PATCH) va o'chirishi (DELETE) mumkin.",
+                "summary": "Bitta e'lonni ko'rish, tahrirlash va o'chirish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_listings_update",
+                "description": "Faqat e'lon egasi uni tahrirlashi (PUT, PATCH) va o'chirishi (DELETE) mumkin.",
+                "summary": "Bitta e'lonni ko'rish, tahrirlash va o'chirish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListingCreateUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingCreateUpdate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_listings_partial_update",
+                "description": "Faqat e'lon egasi uni tahrirlashi (PUT, PATCH) va o'chirishi (DELETE) mumkin.",
+                "summary": "Bitta e'lonni ko'rish, tahrirlash va o'chirish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedListingCreateUpdate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedListingCreateUpdate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedListingCreateUpdate"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingCreateUpdate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_listings_destroy",
+                "description": "Faqat e'lon egasi uni tahrirlashi (PUT, PATCH) va o'chirishi (DELETE) mumkin.",
+                "summary": "Bitta e'lonni ko'rish, tahrirlash va o'chirish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/listings/my/": {
+            "get": {
+                "operationId": "v1_listings_my_list",
+                "description": "Avtorizatsiyadan o'tgan foydalanuvchining barcha e'lonlari (pending, approved, rejected, closed).",
+                "summary": "Mening e'lonlarim",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedListingListList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/listings/photos/{id}/": {
+            "delete": {
+                "operationId": "v1_listings_photos_destroy",
+                "description": "Faqat e'lon egasi yoki moderator rasmni o'chira oladi.",
+                "summary": "E'lon rasmini o'chirish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Listings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/matching/listings/{listing_id}/": {
+            "get": {
+                "operationId": "v1_matching_listings_retrieve",
+                "description": "Aniq bir e'lonning joriy foydalanuvchiga moslik foizini va sabablarini qaytaradi.",
+                "summary": "Bitta e'lon bilan moslik tahlili",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "listing_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Matching"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingMatchDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "E'lon topilmadi"
+                    }
+                }
+            }
+        },
+        "/api/v1/matching/recommendations/": {
+            "get": {
+                "operationId": "v1_matching_recommendations_list",
+                "description": "Foydalanuvchining hududi, jinsi, roli va turmush tarzi afzalliklari (Lifestyle) asosida moslik balli (0-100%) hisoblanadi va eng yuqori mos e'lonlar tartibida qaytariladi.",
+                "summary": "Senga mos e'lonlar (Tavsiya tizimi)",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "min_score",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Minimal moslik bali (masalan, 50)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Sahifa raqami"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page_size",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Sahifadagi natijalar soni"
+                    }
+                ],
+                "tags": [
+                    "Matching"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MatchedListing"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Avtorizatsiyadan o'tilmagan"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/": {
+            "post": {
+                "operationId": "v1_reports_create",
+                "description": "Foydalanuvchi e'lon yoki boshqa foydalanuvchi ustidan shikoyat yuborishi mumkin.",
+                "summary": "Shikoyat yuborish (Soxta e'lon yoki firibgarlarga qarshi)",
+                "tags": [
+                    "Reports"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Report"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Report"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Report"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Shikoyat muvaffaqiyatli qabul qilindi"
+                    },
+                    "400": {
+                        "description": "Validatsiya xatosi"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/my/": {
+            "get": {
+                "operationId": "v1_reports_my_list",
+                "description": "Foydalanuvchi o'zi yuborgan shikoyatlar holatini kuzatishi mumkin.",
+                "summary": "Mening yuborgan shikoyatlarim",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedReportList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/": {
+            "get": {
+                "operationId": "v1_users_retrieve",
+                "description": "Foydalanuvchining ommaviy ma'lumotlari. Telefon raqami faqat tizimga kirganlarga ko'rinadi.",
+                "summary": "Boshqa foydalanuvchining ommaviy profili",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PublicUser"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuthorPublic": {
+                "type": "object",
+                "description": "E'lon muallifining ommaviy ma'lumotlari.\nQoida: Telefon raqam faqat tizimga kirgan foydalanuvchiga ko'rinadi.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "Ism",
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Familiya",
+                        "maxLength": 100
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Telefon raqami",
+                        "description": "Masalan: +998901234567",
+                        "maxLength": 20
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "title": "Profil rasmi"
+                    },
+                    "telegram_username": {
+                        "type": "string",
+                        "title": "Telegram foydalanuvchi nomi",
+                        "description": "Masalan: @foydalanuvchi",
+                        "maxLength": 100
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "title": "Tasdiqlangan foydalanuvchi (ishonch belgisi)",
+                        "description": "Tasdiqlangan foydalanuvchilarning e'lonlari avtomatik approved bo'ladi"
+                    },
+                    "date_joined": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Ro'yxatdan o'tgan sana"
+                    }
+                },
+                "required": [
+                    "date_joined",
+                    "first_name",
+                    "id"
+                ]
+            },
+            "BlankEnum": {
+                "enum": [
+                    ""
+                ]
+            },
+            "CleanlinessEnum": {
+                "enum": [
+                    "very_clean",
+                    "moderate",
+                    "relaxed"
+                ],
+                "type": "string",
+                "description": "* `very_clean` - Juda tartibli va toza\n* `moderate` - O'rtacha tozalik\n* `relaxed` - Erkin / Qat'iy emas"
+            },
+            "CustomTokenObtainPair": {
+                "type": "object",
+                "description": "JWT token olish uchun email va parol serializatori.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "writeOnly": true
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "FavoriteAction": {
+                "type": "object",
+                "description": "Sevimlilarga qo'shish / olib tashlash serializatori.",
+                "properties": {
+                    "listing_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "listing_id"
+                ]
+            },
+            "FavoriteList": {
+                "type": "object",
+                "description": "Sevimli e'lonlar ro'yxati serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "listing": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingList"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Saqlangan sana"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "listing"
+                ]
+            },
+            "GenderEnum": {
+                "enum": [
+                    "male",
+                    "female"
+                ],
+                "type": "string",
+                "description": "* `male` - Erkak\n* `female` - Ayol"
+            },
+            "GenderPreferenceEnum": {
+                "enum": [
+                    "male",
+                    "female",
+                    "any"
+                ],
+                "type": "string",
+                "description": "* `male` - Faqat erkaklar / yigitlar\n* `female` - Faqat ayollar / qizlar\n* `any` - Farqi yo'q"
+            },
+            "GoogleAuth": {
+                "type": "object",
+                "description": "Google ID Token orqali kirish/ro'yxatdan o'tish serializatori.",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "GuestsEnum": {
+                "enum": [
+                    "no",
+                    "rarely",
+                    "welcome"
+                ],
+                "type": "string",
+                "description": "* `no` - Mehmon kutish mumkin emas\n* `rarely` - Faqat ogohlantirish bilan / Kamdan-kam\n* `welcome` - Erkin / Ruxsat"
+            },
+            "LifestylePreference": {
+                "type": "object",
+                "description": "Turmush tarzi afzalliklari serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "smoking": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SmokingEnum"
+                            }
+                        ],
+                        "title": "Chekishga munosabat"
+                    },
+                    "cleanliness": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CleanlinessEnum"
+                            }
+                        ],
+                        "title": "Tozalik va tartib"
+                    },
+                    "curfew": {
+                        "type": "string",
+                        "title": "Uyga kelish vaqti",
+                        "description": "Masalan: Soat 22:00 gacha, yoki Cheklov yo'q",
+                        "maxLength": 100
+                    },
+                    "pets": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PetsEnum"
+                            }
+                        ],
+                        "title": "Uy hayvonlariga munosabat"
+                    },
+                    "guests": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GuestsEnum"
+                            }
+                        ],
+                        "title": "Mehmon olib kelish"
+                    },
+                    "sleep_schedule": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SleepScheduleEnum"
+                            }
+                        ],
+                        "title": "Uyqu rejimi"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Qo'shimcha odatlar yoki talablar"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yangilangan sana"
+                    }
+                },
+                "required": [
+                    "id",
+                    "updated_at"
+                ]
+            },
+            "ListingCreateUpdate": {
+                "type": "object",
+                "description": "E'lon yaratish va yangilash serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Sarlavha",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Tavsif"
+                    },
+                    "listing_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingTypeEnum"
+                            }
+                        ],
+                        "title": "E'lon turi"
+                    },
+                    "city_id": {
+                        "type": "integer"
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "title": "Aniq manzil yoki mo'ljal",
+                        "maxLength": 255
+                    },
+                    "price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,12}(?:\\.\\d{0,0})?$",
+                        "title": "Oylik narx (so'mda)",
+                        "description": "So'mda, masalan 1500000"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "title": "Nechta kishiga mo'ljallangan / kerak"
+                    },
+                    "gender_preference": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderPreferenceEnum"
+                            }
+                        ],
+                        "title": "Jinsi bo'yicha talab"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusE4eEnum"
+                            }
+                        ],
+                        "title": "E'lon holati"
+                    },
+                    "moderation_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModerationStatusEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "title": "Moderatsiya holati"
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "readOnly": true,
+                        "title": "Rad etish sababi"
+                    }
+                },
+                "required": [
+                    "city_id",
+                    "description",
+                    "id",
+                    "moderation_status",
+                    "price",
+                    "rejection_reason",
+                    "title"
+                ]
+            },
+            "ListingDetail": {
+                "type": "object",
+                "description": "Bitta e'lonning to'liq ma'lumotlari serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Sarlavha",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Tavsif"
+                    },
+                    "listing_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingTypeEnum"
+                            }
+                        ],
+                        "title": "E'lon turi"
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "city_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "district_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "title": "Aniq manzil yoki mo'ljal",
+                        "maxLength": 255
+                    },
+                    "price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,12}(?:\\.\\d{0,0})?$",
+                        "title": "Oylik narx (so'mda)",
+                        "description": "So'mda, masalan 1500000"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "title": "Nechta kishiga mo'ljallangan / kerak"
+                    },
+                    "gender_preference": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderPreferenceEnum"
+                            }
+                        ],
+                        "title": "Jinsi bo'yicha talab"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusE4eEnum"
+                            }
+                        ],
+                        "title": "E'lon holati"
+                    },
+                    "moderation_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModerationStatusEnum"
+                            }
+                        ],
+                        "title": "Moderatsiya holati"
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "title": "Rad etish sababi"
+                    },
+                    "photos": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingPhoto"
+                        },
+                        "readOnly": true
+                    },
+                    "author": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthorPublic"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yaratilgan sana"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Tahrirlangan sana"
+                    }
+                },
+                "required": [
+                    "author",
+                    "city_id",
+                    "city_name",
+                    "created_at",
+                    "description",
+                    "district_id",
+                    "district_name",
+                    "id",
+                    "photos",
+                    "price",
+                    "title",
+                    "updated_at"
+                ]
+            },
+            "ListingList": {
+                "type": "object",
+                "description": "E'lonlar ro'yxati (ixcham) serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Sarlavha",
+                        "maxLength": 255
+                    },
+                    "listing_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingTypeEnum"
+                            }
+                        ],
+                        "title": "E'lon turi"
+                    },
+                    "price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,12}(?:\\.\\d{0,0})?$",
+                        "title": "Oylik narx (so'mda)",
+                        "description": "So'mda, masalan 1500000"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "title": "Nechta kishiga mo'ljallangan / kerak"
+                    },
+                    "gender_preference": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderPreferenceEnum"
+                            }
+                        ],
+                        "title": "Jinsi bo'yicha talab"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusE4eEnum"
+                            }
+                        ],
+                        "title": "E'lon holati"
+                    },
+                    "moderation_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModerationStatusEnum"
+                            }
+                        ],
+                        "title": "Moderatsiya holati"
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "title": "Rad etish sababi"
+                    },
+                    "city_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "district_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "main_photo": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "photos": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingPhoto"
+                        },
+                        "readOnly": true
+                    },
+                    "author": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthorPublic"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yaratilgan sana"
+                    }
+                },
+                "required": [
+                    "author",
+                    "city_name",
+                    "created_at",
+                    "district_name",
+                    "id",
+                    "main_photo",
+                    "photos",
+                    "price",
+                    "title"
+                ]
+            },
+            "ListingMatchDetail": {
+                "type": "object",
+                "description": "Aniq bitta e'lon bilan moslik tahlili.",
+                "properties": {
+                    "listing_id": {
+                        "type": "integer"
+                    },
+                    "listing_title": {
+                        "type": "string"
+                    },
+                    "match_score": {
+                        "type": "integer"
+                    },
+                    "match_breakdown": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/MatchBreakdown"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "match_details": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "listing_id",
+                    "listing_title",
+                    "match_breakdown",
+                    "match_details",
+                    "match_score"
+                ]
+            },
+            "ListingPhoto": {
+                "type": "object",
+                "description": "E'lon rasmlari serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "image": {
+                        "type": "string",
+                        "format": "uri",
+                        "title": "Rasm"
+                    },
+                    "is_main": {
+                        "type": "boolean",
+                        "title": "Asosiy rasm"
+                    },
+                    "uploaded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yuklangan sana"
+                    }
+                },
+                "required": [
+                    "id",
+                    "image",
+                    "uploaded_at"
+                ]
+            },
+            "ListingPhotoUpload": {
+                "type": "object",
+                "description": "E'longa rasm yuklash serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "image": {
+                        "type": "string",
+                        "format": "uri",
+                        "title": "Rasm"
+                    },
+                    "is_main": {
+                        "type": "boolean",
+                        "title": "Asosiy rasm"
+                    },
+                    "uploaded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yuklangan sana"
+                    }
+                },
+                "required": [
+                    "id",
+                    "image",
+                    "uploaded_at"
+                ]
+            },
+            "ListingTypeEnum": {
+                "enum": [
+                    "have_room",
+                    "need_room"
+                ],
+                "type": "string",
+                "description": "* `have_room` - Joy bor (Sherik kerak)\n* `need_room` - Joy kerak (Ijara qidiryapti)"
+            },
+            "MatchBreakdown": {
+                "type": "object",
+                "description": "Moslik ballarining mezonlar bo'yicha taqsimoti.",
+                "properties": {
+                    "location": {
+                        "type": "integer",
+                        "description": "Hudud mosligi (maks 30)"
+                    },
+                    "gender": {
+                        "type": "integer",
+                        "description": "Jins mosligi (maks 25)"
+                    },
+                    "lifestyle": {
+                        "type": "integer",
+                        "description": "Turmush tarzi mosligi (maks 30)"
+                    },
+                    "type": {
+                        "type": "integer",
+                        "description": "Rol va e'lon turi mosligi (maks 15)"
+                    }
+                },
+                "required": [
+                    "gender",
+                    "lifestyle",
+                    "location",
+                    "type"
+                ]
+            },
+            "MatchedListing": {
+                "type": "object",
+                "description": "Tavsiya etilgan e'lon va uning moslik ko'rsatkichlari.",
+                "properties": {
+                    "listing": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingList"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "match_score": {
+                        "type": "integer",
+                        "description": "Umumiy moslik foizi (0 dan 100 gacha)"
+                    },
+                    "match_breakdown": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/MatchBreakdown"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "match_details": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Moslik bo'yicha izohlar va hisoblangan ballar"
+                    }
+                },
+                "required": [
+                    "listing",
+                    "match_breakdown",
+                    "match_details",
+                    "match_score"
+                ]
+            },
+            "ModerationStatusEnum": {
+                "enum": [
+                    "pending",
+                    "approved",
+                    "rejected"
+                ],
+                "type": "string",
+                "description": "* `pending` - Kutilmoqda\n* `approved` - Tasdiqlangan\n* `rejected` - Rad etilgan"
+            },
+            "PaginatedFavoriteListList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FavoriteList"
+                        }
+                    }
+                }
+            },
+            "PaginatedListingListList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingList"
+                        }
+                    }
+                }
+            },
+            "PaginatedReportList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Report"
+                        }
+                    }
+                }
+            },
+            "PatchedLifestylePreference": {
+                "type": "object",
+                "description": "Turmush tarzi afzalliklari serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "smoking": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SmokingEnum"
+                            }
+                        ],
+                        "title": "Chekishga munosabat"
+                    },
+                    "cleanliness": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CleanlinessEnum"
+                            }
+                        ],
+                        "title": "Tozalik va tartib"
+                    },
+                    "curfew": {
+                        "type": "string",
+                        "title": "Uyga kelish vaqti",
+                        "description": "Masalan: Soat 22:00 gacha, yoki Cheklov yo'q",
+                        "maxLength": 100
+                    },
+                    "pets": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PetsEnum"
+                            }
+                        ],
+                        "title": "Uy hayvonlariga munosabat"
+                    },
+                    "guests": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GuestsEnum"
+                            }
+                        ],
+                        "title": "Mehmon olib kelish"
+                    },
+                    "sleep_schedule": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SleepScheduleEnum"
+                            }
+                        ],
+                        "title": "Uyqu rejimi"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Qo'shimcha odatlar yoki talablar"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yangilangan sana"
+                    }
+                }
+            },
+            "PatchedListingCreateUpdate": {
+                "type": "object",
+                "description": "E'lon yaratish va yangilash serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Sarlavha",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Tavsif"
+                    },
+                    "listing_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ListingTypeEnum"
+                            }
+                        ],
+                        "title": "E'lon turi"
+                    },
+                    "city_id": {
+                        "type": "integer"
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "title": "Aniq manzil yoki mo'ljal",
+                        "maxLength": 255
+                    },
+                    "price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,12}(?:\\.\\d{0,0})?$",
+                        "title": "Oylik narx (so'mda)",
+                        "description": "So'mda, masalan 1500000"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0,
+                        "title": "Nechta kishiga mo'ljallangan / kerak"
+                    },
+                    "gender_preference": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderPreferenceEnum"
+                            }
+                        ],
+                        "title": "Jinsi bo'yicha talab"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusE4eEnum"
+                            }
+                        ],
+                        "title": "E'lon holati"
+                    },
+                    "moderation_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModerationStatusEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "title": "Moderatsiya holati"
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "readOnly": true,
+                        "title": "Rad etish sababi"
+                    }
+                }
+            },
+            "PatchedUserProfile": {
+                "type": "object",
+                "description": "Foydalanuvchining shaxsiy profili (o'zi uchun to'liq ma'lumot).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "Email manzili",
+                        "description": "Tizimga kirish uchun asosiy identifikator"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "Ism",
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Familiya",
+                        "maxLength": 100
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Telefon raqami",
+                        "description": "Masalan: +998901234567",
+                        "maxLength": 20
+                    },
+                    "is_phone_verified": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Telefon tasdiqlangan",
+                        "description": "Keyinchalik SMS/Telegram orqali tasdiqlash uchun belgi"
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Tasdiqlangan foydalanuvchi (ishonch belgisi)",
+                        "description": "Tasdiqlangan foydalanuvchilarning e'lonlari avtomatik approved bo'ladi"
+                    },
+                    "gender": {
+                        "title": "Jinsi",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "city_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "district_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "birth_year": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "nullable": true,
+                        "title": "Tug'ilgan yili"
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RoleEnum"
+                            }
+                        ],
+                        "title": "Foydalanuvchi roli"
+                    },
+                    "telegram_username": {
+                        "type": "string",
+                        "title": "Telegram foydalanuvchi nomi",
+                        "description": "Masalan: @foydalanuvchi",
+                        "maxLength": 100
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "title": "Profil rasmi"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "title": "O'zi haqida qisqacha ma'lumot"
+                    },
+                    "lifestyle": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "date_joined": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Ro'yxatdan o'tgan sana"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Tahrirlangan sana"
+                    }
+                }
+            },
+            "PetsEnum": {
+                "enum": [
+                    "no",
+                    "yes",
+                    "indifferent"
+                ],
+                "type": "string",
+                "description": "* `no` - Hayvonlarga qarshiman\n* `yes` - Uy hayvoni bor / Yoqtiraman\n* `indifferent` - Farqi yo'q"
+            },
+            "PublicUser": {
+                "type": "object",
+                "description": "Boshqa foydalanuvchilarning ommaviy profili.\nQoida: Telefon raqam faqat tizimga kirgan foydalanuvchiga ko'rinadi.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "Ism",
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Familiya",
+                        "maxLength": 100
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Telefon raqami",
+                        "description": "Masalan: +998901234567",
+                        "maxLength": 20
+                    },
+                    "is_phone_verified": {
+                        "type": "boolean",
+                        "title": "Telefon tasdiqlangan",
+                        "description": "Keyinchalik SMS/Telegram orqali tasdiqlash uchun belgi"
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "title": "Tasdiqlangan foydalanuvchi (ishonch belgisi)",
+                        "description": "Tasdiqlangan foydalanuvchilarning e'lonlari avtomatik approved bo'ladi"
+                    },
+                    "gender": {
+                        "title": "Jinsi",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "city_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "district_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "birth_year": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "nullable": true,
+                        "title": "Tug'ilgan yili"
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RoleEnum"
+                            }
+                        ],
+                        "title": "Foydalanuvchi roli"
+                    },
+                    "telegram_username": {
+                        "type": "string",
+                        "title": "Telegram foydalanuvchi nomi",
+                        "description": "Masalan: @foydalanuvchi",
+                        "maxLength": 100
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "title": "Profil rasmi"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "title": "O'zi haqida qisqacha ma'lumot"
+                    },
+                    "lifestyle": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "date_joined": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Ro'yxatdan o'tgan sana"
+                    }
+                },
+                "required": [
+                    "city_name",
+                    "date_joined",
+                    "district_name",
+                    "first_name",
+                    "id",
+                    "lifestyle"
+                ]
+            },
+            "Report": {
+                "type": "object",
+                "description": "Shikoyat yaratish va ko'rish serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "reported_listing_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "listing_title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "reported_user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "user_email": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "title": "Shikoyat sababi va tafsilotlari",
+                        "description": "Soxta e'lon, haqoratli muomala, firibgarlik va h.k."
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ReportStatusEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "title": "Shikoyat holati"
+                    },
+                    "moderator_notes": {
+                        "type": "string",
+                        "readOnly": true,
+                        "title": "Moderator xulosasi / izohi"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yuborilgan sana"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Yangilangan sana"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "listing_title",
+                    "moderator_notes",
+                    "reason",
+                    "status",
+                    "updated_at",
+                    "user_email"
+                ]
+            },
+            "ReportStatusEnum": {
+                "enum": [
+                    "new",
+                    "in_review",
+                    "resolved",
+                    "dismissed"
+                ],
+                "type": "string",
+                "description": "* `new` - Yangi\n* `in_review` - Ko'rib chiqilmoqda\n* `resolved` - Hal qilindi (chora ko'rildi)\n* `dismissed` - Rad etildi (asossiz)"
+            },
+            "RoleEnum": {
+                "enum": [
+                    "seeker",
+                    "host"
+                ],
+                "type": "string",
+                "description": "* `seeker` - Sherik/Joy qidiruvchi (talaba/ishlovchi)\n* `host` - Joy egasi / Asosiy ijarachi"
+            },
+            "SleepScheduleEnum": {
+                "enum": [
+                    "early_bird",
+                    "night_owl",
+                    "flexible"
+                ],
+                "type": "string",
+                "description": "* `early_bird` - Erta yotib, erta turuvchi (tonggi)\n* `night_owl` - Kech yotuvchi (tungi)\n* `flexible` - Moslashuvchan"
+            },
+            "SmokingEnum": {
+                "enum": [
+                    "no",
+                    "yes",
+                    "outside"
+                ],
+                "type": "string",
+                "description": "* `no` - Chekmayman / Chekilmasin\n* `yes` - Chekaman / Ruxsat\n* `outside` - Faqat tashqarida/balkonda"
+            },
+            "StatusE4eEnum": {
+                "enum": [
+                    "active",
+                    "closed"
+                ],
+                "type": "string",
+                "description": "* `active` - Faol\n* `closed` - Yopilgan"
+            },
+            "TokenRefresh": {
+                "type": "object",
+                "properties": {
+                    "access": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "refresh": {
+                        "type": "string",
+                        "writeOnly": true
+                    }
+                },
+                "required": [
+                    "access",
+                    "refresh"
+                ]
+            },
+            "UserProfile": {
+                "type": "object",
+                "description": "Foydalanuvchining shaxsiy profili (o'zi uchun to'liq ma'lumot).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "Email manzili",
+                        "description": "Tizimga kirish uchun asosiy identifikator"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "Ism",
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Familiya",
+                        "maxLength": 100
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Telefon raqami",
+                        "description": "Masalan: +998901234567",
+                        "maxLength": 20
+                    },
+                    "is_phone_verified": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Telefon tasdiqlangan",
+                        "description": "Keyinchalik SMS/Telegram orqali tasdiqlash uchun belgi"
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "title": "Tasdiqlangan foydalanuvchi (ishonch belgisi)",
+                        "description": "Tasdiqlangan foydalanuvchilarning e'lonlari avtomatik approved bo'ladi"
+                    },
+                    "gender": {
+                        "title": "Jinsi",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "city_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "district_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "birth_year": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "nullable": true,
+                        "title": "Tug'ilgan yili"
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RoleEnum"
+                            }
+                        ],
+                        "title": "Foydalanuvchi roli"
+                    },
+                    "telegram_username": {
+                        "type": "string",
+                        "title": "Telegram foydalanuvchi nomi",
+                        "description": "Masalan: @foydalanuvchi",
+                        "maxLength": 100
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "title": "Profil rasmi"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "title": "O'zi haqida qisqacha ma'lumot"
+                    },
+                    "lifestyle": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/LifestylePreference"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "date_joined": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Ro'yxatdan o'tgan sana"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "title": "Tahrirlangan sana"
+                    }
+                },
+                "required": [
+                    "city_name",
+                    "date_joined",
+                    "district_name",
+                    "email",
+                    "first_name",
+                    "id",
+                    "is_phone_verified",
+                    "is_verified",
+                    "lifestyle",
+                    "updated_at"
+                ]
+            },
+            "UserRegistration": {
+                "type": "object",
+                "description": "Foydalanuvchini ro'yxatdan o'tkazish serializatori.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email manzili",
+                        "description": "Tizimga kirish uchun asosiy identifikator",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    },
+                    "password_confirm": {
+                        "type": "string",
+                        "writeOnly": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "Ism",
+                        "maxLength": 100
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Familiya",
+                        "maxLength": 100
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Telefon raqami",
+                        "description": "Masalan: +998901234567",
+                        "maxLength": 20
+                    },
+                    "gender": {
+                        "title": "Jinsi",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "district_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "birth_year": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "nullable": true,
+                        "title": "Tug'ilgan yili"
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RoleEnum"
+                            }
+                        ],
+                        "title": "Foydalanuvchi roli"
+                    },
+                    "telegram_username": {
+                        "type": "string",
+                        "title": "Telegram foydalanuvchi nomi",
+                        "description": "Masalan: @foydalanuvchi",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "email",
+                    "first_name",
+                    "id",
+                    "password",
+                    "password_confirm"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

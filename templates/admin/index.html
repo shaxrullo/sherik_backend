@@ -1,0 +1,59 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if stats %}
+<div style="margin-bottom: 25px;">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 15px; color: #1e293b;">
+        Platforma Asosiy Ko'rsatkichlari (Jonli Statistika)
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 15px;">
+        <!-- Foydalanuvchilar -->
+        <div style="background: #ffffff; border-radius: 8px; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #3b82f6;">
+            <div style="color: #64748b; font-size: 0.85rem; font-weight: 500;">JAMI FOYDALANUVCHILAR</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-top: 4px;">{{ stats.total_users }}</div>
+            <div style="font-size: 0.8rem; color: #10b981; margin-top: 4px;">
+                {{ stats.verified_users }} tasdiqlangan | <span style="color: #ef4444;">{{ stats.blocked_users }} bloklangan</span>
+            </div>
+        </div>
+
+        <!-- Moderatsiyada kutilayotgan e'lonlar -->
+        <div style="background: #ffffff; border-radius: 8px; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #f59e0b;">
+            <div style="color: #64748b; font-size: 0.85rem; font-weight: 500;">MODERATSIYADA (KUTILMOQDA)</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #f59e0b; margin-top: 4px;">{{ stats.pending_listings }}</div>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                <a href="{% url 'admin:listings_listing_changelist' %}?moderation_status__exact=pending" style="color: #f59e0b; font-weight: 600;">E'lonlarni ko'rish &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Faol e'lonlar -->
+        <div style="background: #ffffff; border-radius: 8px; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
+            <div style="color: #64748b; font-size: 0.85rem; font-weight: 500;">FAOL E'LONLAR</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #10b981; margin-top: 4px;">{{ stats.active_listings }}</div>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Ommaviy qidiruvda ko'rinmoqda</div>
+        </div>
+
+        <!-- Yangi shikoyatlar -->
+        <div style="background: #ffffff; border-radius: 8px; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ef4444;">
+            <div style="color: #64748b; font-size: 0.85rem; font-weight: 500;">YANGI SHIKOYATLAR</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #ef4444; margin-top: 4px;">{{ stats.new_reports }}</div>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                <a href="{% url 'admin:reports_report_changelist' %}?status__exact=new" style="color: #ef4444; font-weight: 600;">Shikoyatlarni ko'rish &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Oxirgi 7 kunlik o'sish -->
+        <div style="background: #ffffff; border-radius: 8px; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #8b5cf6;">
+            <div style="color: #64748b; font-size: 0.85rem; font-weight: 500;">OXIRGI 7 KUNLIK O'SISH</div>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #8b5cf6; margin-top: 4px;">
+                +{{ stats.last_7_days_users }} user / +{{ stats.last_7_days_listings }} e'lon
+            </div>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Yangi ro'yxatdan o'tganlar</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}
+
