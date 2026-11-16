@@ -243,6 +243,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'district_name',
             'birth_year',
             'role',
+            'is_staff',
+            'is_superuser',
             'telegram_username',
             'avatar',
             'bio',
@@ -250,7 +252,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'date_joined',
             'updated_at',
         ]
-        read_only_fields = ['id', 'email', 'is_phone_verified', 'is_verified', 'date_joined', 'updated_at']
+        read_only_fields = [
+            'id',
+            'email',
+            'is_phone_verified',
+            'is_verified',
+            'is_staff',
+            'is_superuser',
+            'date_joined',
+            'updated_at',
+        ]
 
 
 class PublicUserListingSerializer(serializers.Serializer):

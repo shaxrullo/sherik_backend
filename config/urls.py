@@ -59,7 +59,7 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # Admin API
-    path('api/v1/admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+    path('api/v1/admin/', include('users.urls_admin')),
 
     # API v1 ilovalar
     path('api/v1/auth/', include('users.urls_auth')),
