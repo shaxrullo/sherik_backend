@@ -178,3 +178,32 @@ GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 
 # Admin URL path
 ADMIN_URL = env('ADMIN_URL', default='admin/').strip('/') + '/'
+LOGIN_REDIRECT_URL = '/' + ADMIN_URL
+LOGOUT_REDIRECT_URL = '/' + ADMIN_URL
+
+# Logging configuration (Render va server konsoliga to'liq xatoliklarni chiqarish)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}

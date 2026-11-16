@@ -22,23 +22,25 @@ def custom_admin_index(request, extra_context=None):
     from reports.models import Report
 
     extra_context = extra_context or {}
-    seven_days_ago = timezone.now() - timedelta(days=7)
-
-    extra_context['stats'] = {
-        'total_users': User.objects.count(),
-        'verified_users': User.objects.filter(is_verified=True).count(),
-        'blocked_users': User.objects.filter(is_active=False).count(),
-        'active_listings': Listing.objects.filter(
-            status=Listing.Status.ACTIVE,
-            moderation_status=Listing.ModerationStatus.APPROVED
-        ).count(),
-        'pending_listings': Listing.objects.filter(
-            moderation_status=Listing.ModerationStatus.PENDING
-        ).count(),
-        'new_reports': Report.objects.filter(status=Report.Status.NEW).count(),
-        'last_7_days_listings': Listing.objects.filter(created_at__gte=seven_days_ago).count(),
-        'last_7_days_users': User.objects.filter(date_joined__gte=seven_days_ago).count(),
-    }
+    try:
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        extra_context['stats'] = {
+            'total_users': User.objects.count(),
+            'verified_users': User.objects.filter(is_verified=True).count(),
+            'blocked_users': User.objects.filter(is_active=False).count(),
+            'active_listings': Listing.objects.filter(
+                status=Listing.Status.ACTIVE,
+                moderation_status=Listing.ModerationStatus.APPROVED
+            ).count(),
+            'pending_listings': Listing.objects.filter(
+                moderation_status=Listing.ModerationStatus.PENDING
+            ).count(),
+            'new_reports': Report.objects.filter(status=Report.Status.NEW).count(),
+            'last_7_days_listings': Listing.objects.filter(created_at__gte=seven_days_ago).count(),
+            'last_7_days_users': User.objects.filter(date_joined__gte=seven_days_ago).count(),
+        }
+    except Exception as e:
+        extra_context['stats'] = {}
     return original_admin_index(request, extra_context=extra_context)
 
 

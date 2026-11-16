@@ -8,9 +8,29 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
 """
 
 import os
+import sys
+import logging
 
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
+
+# Render Free Plan va har qanday serverda avtomatik migratsiya va admin yaratish
+try:
+    from django.core.management import call_command
+    call_command('migrate', interactive=False)
+
+    from users.models import User
+    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@sherik.uz')
+    admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin12345')
+
+    user, created = User.objects.get_or_create(email=admin_email, defaults={'first_name': 'Admin'})
+    user.is_staff = True
+    user.is_superuser = True
+    user.set_password(admin_pass)
+    user.save()
+    print(f'>>> Auto-migration muvaffaqiyatli bajarildi! Admin: {admin_email} <<<', file=sys.stdout)
+except Exception as e:
+    logging.exception('WSGI auto-migration error: %s', e)
