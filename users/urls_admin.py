@@ -33,3 +33,4 @@ urlpatterns = [
     path('reports/', AdminReportsView.as_view(), name='reports'),
     path('reports/<int:pk>/status/', AdminReportUpdateStatusView.as_view(), name='report_update_status'),
 ]
+

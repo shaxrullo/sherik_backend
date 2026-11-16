@@ -144,6 +144,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'role': self.user.role,
             'is_phone_verified': self.user.is_phone_verified,
             'is_verified': self.user.is_verified,
+            'is_staff': self.user.is_staff,
+            'is_superuser': self.user.is_superuser,
         }
         return data
 
@@ -200,6 +202,8 @@ class GoogleAuthSerializer(serializers.Serializer):
                 'role': user.role,
                 'is_phone_verified': user.is_phone_verified,
                 'is_verified': user.is_verified,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
             },
             'access': str(refresh.access_token),
             'refresh': str(refresh),
