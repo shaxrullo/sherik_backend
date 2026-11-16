@@ -117,9 +117,13 @@ class Listing(models.Model):
         return f"{self.title} ({self.get_listing_type_display()}) - {self.city.name}"
 
     def save(self, *args, **kwargs):
-        # Allaqachon tasdiqlangan ishonchli foydalanuvchilar (is_verified=True) e'loni avtomatik approved bo'ladi
-        if not self.pk and self.author_id:
-            if getattr(self.author, 'is_verified', False):
+        # Allaqachon tasdiqlangan ishonchli foydalanuvchilar (is_verified=True) yoki admin/moderatorlar e'loni avtomatik approved bo'ladi
+        if not self.pk:
+            author = getattr(self, 'author', None)
+            if not author and self.author_id:
+                from django.contrib.auth import get_user_model
+                author = get_user_model().objects.filter(pk=self.author_id).first()
+            if author and (getattr(author, 'is_verified', False) or getattr(author, 'is_staff', False)):
                 self.moderation_status = self.ModerationStatus.APPROVED
                 self.moderated_at = timezone.now()
         super().save(*args, **kwargs)

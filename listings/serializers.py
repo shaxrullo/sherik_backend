@@ -141,6 +141,11 @@ class ListingDetailSerializer(serializers.ModelSerializer):
         # Faqat e'lon egasi va admin/moderator rad etish sababini ko'ra oladi
         if not is_owner_or_staff:
             data.pop('rejection_reason', None)
+
+        data['is_favorited'] = False
+        if request and request.user and request.user.is_authenticated:
+            data['is_favorited'] = instance.favorited_by.filter(user=request.user).exists()
+
         return data
 
 
@@ -205,8 +210,12 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        from django.utils import timezone
         user = self.context['request'].user
         validated_data['author'] = user
+        if getattr(user, 'is_verified', False) or getattr(user, 'is_staff', False):
+            validated_data['moderation_status'] = Listing.ModerationStatus.APPROVED
+            validated_data['moderated_at'] = timezone.now()
         return super().create(validated_data)
 
 

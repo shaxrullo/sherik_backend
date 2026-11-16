@@ -253,15 +253,46 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'email', 'is_phone_verified', 'is_verified', 'date_joined', 'updated_at']
 
 
+class PublicUserListingSerializer(serializers.Serializer):
+    """Foydalanuvchi profilida ko'rsatiladigan e'lon (ixcham)."""
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    listing_type = serializers.CharField()
+    price = serializers.DecimalField(max_digits=12, decimal_places=2)
+    city_name = serializers.SerializerMethodField()
+    district_name = serializers.SerializerMethodField()
+    main_photo = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField()
+
+    def get_city_name(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_district_name(self, obj):
+        return obj.district.name if obj.district else None
+
+    def get_main_photo(self, obj):
+        photos = list(obj.photos.all())
+        if not photos:
+            return None
+        main = next((p for p in photos if p.is_main), photos[0])
+        request = self.context.get('request')
+        if request and main.image:
+            return request.build_absolute_uri(main.image.url)
+        return main.image.url if main.image else None
+
+
 class PublicUserSerializer(serializers.ModelSerializer):
     """
     Boshqa foydalanuvchilarning ommaviy profili.
     Qoida: Telefon raqam faqat tizimga kirgan foydalanuvchiga ko'rinadi.
+    listings - foydalanuvchining faol va tasdiqlangan e'lonlari.
     """
 
     lifestyle = LifestylePreferenceSerializer(read_only=True)
     city_name = serializers.CharField(source='city.name', read_only=True)
     district_name = serializers.CharField(source='district.name', read_only=True)
+    listings = serializers.SerializerMethodField()
+    listings_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -282,7 +313,32 @@ class PublicUserSerializer(serializers.ModelSerializer):
             'bio',
             'lifestyle',
             'date_joined',
+            'listings',
+            'listings_count',
         ]
+
+    def get_listings(self, instance):
+        from listings.models import Listing
+        qs = (
+            Listing.objects
+            .filter(
+                author=instance,
+                status=Listing.Status.ACTIVE,
+                moderation_status=Listing.ModerationStatus.APPROVED,
+            )
+            .select_related('city', 'district')
+            .prefetch_related('photos')
+            .order_by('-created_at')
+        )
+        return PublicUserListingSerializer(qs, many=True, context=self.context).data
+
+    def get_listings_count(self, instance):
+        from listings.models import Listing
+        return Listing.objects.filter(
+            author=instance,
+            status=Listing.Status.ACTIVE,
+            moderation_status=Listing.ModerationStatus.APPROVED,
+        ).count()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -77,17 +77,14 @@ class FavoriteRemoveView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request, listing_id):
-        deleted_count, _ = Favorite.objects.filter(
+        Favorite.objects.filter(
             user=request.user,
             listing_id=listing_id,
         ).delete()
 
-        if deleted_count == 0:
-            raise NotFound("Ushbu e'lon sizning sevimlilaringiz ro'yxatida topilmadi.")
-
         return Response(
             {'message': "E'lon sevimlilar ro'yxatidan olib tashlandi."},
-            status=status.HTTP_204_NO_CONTENT,
+            status=status.HTTP_200_OK,
         )
 
 
@@ -128,6 +125,7 @@ class FavoriteToggleView(APIView):
             return Response(
                 {
                     'is_favorited': False,
+                    'favorited': False,
                     'message': "E'lon sevimlilar ro'yxatidan olib tashlandi.",
                 },
                 status=status.HTTP_200_OK,
@@ -137,7 +135,32 @@ class FavoriteToggleView(APIView):
             return Response(
                 {
                     'is_favorited': True,
+                    'favorited': True,
                     'message': "E'lon sevimlilar ro'yxatiga qo'shildi.",
                 },
                 status=status.HTTP_200_OK,
             )
+
+
+@extend_schema(
+    tags=['Favorites'],
+    summary="Barcha sevimlilarni tozalash",
+    description="Foydalanuvchining barcha sevimli e'lonlarini ro'yxatdan o'chiradi.",
+    responses={
+        200: OpenApiResponse(description="Barcha sevimlilar tozalandi"),
+    }
+)
+class FavoriteClearView(APIView):
+    """Barcha sevimlilarni tozalash viewsi."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        count, _ = Favorite.objects.filter(user=request.user).delete()
+        return Response(
+            {
+                'message': f"{count} ta sevimli e'lon ro'yxatdan olib tashlandi.",
+                'count': count,
+            },
+            status=status.HTTP_200_OK,
+        )
