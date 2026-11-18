@@ -6,4 +6,4 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 python init_admin.py
-python manage.py seed_cities
+python init_cities.py
