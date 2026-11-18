@@ -10,6 +10,7 @@ from .views_admin import (
     AdminUserToggleBlockView,
     AdminReportsView,
     AdminReportUpdateStatusView,
+    AdminSeedCitiesView,
 )
 
 app_name = 'admin_api'
@@ -32,5 +33,8 @@ urlpatterns = [
     # Shikoyatlar
     path('reports/', AdminReportsView.as_view(), name='reports'),
     path('reports/<int:pk>/status/', AdminReportUpdateStatusView.as_view(), name='report_update_status'),
+
+    # Shaharlar seed (bir marta ishlatiladi)
+    path('seed-cities/', AdminSeedCitiesView.as_view(), name='seed_cities'),
 ]
 
