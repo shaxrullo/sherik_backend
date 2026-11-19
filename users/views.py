@@ -132,3 +132,69 @@ class PublicUserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True).select_related('lifestyle')
     serializer_class = PublicUserSerializer
     permission_classes = [permissions.AllowAny]
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary="Telegram foydalanuvchisi uchun autentifikatsiya",
+    description="Telegram ID va profil ma'lumotlari orqali foydalanuvchini tizimga kiritadi yoki ro'yxatdan o'tkazadi.",
+)
+class TelegramAuthView(APIView):
+    """Telegram bot va WebApp orqali avtomatik login / register."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        telegram_id = request.data.get('telegram_id')
+        if not telegram_id:
+            return Response({'error': "telegram_id kiritilishi shart."}, status=status.HTTP_400_BAD_REQUEST)
+
+        first_name = request.data.get('first_name', '') or 'Foydalanuvchi'
+        last_name = request.data.get('last_name', '') or ''
+        username = request.data.get('username', '') or ''
+        phone_number = request.data.get('phone_number', '') or ''
+
+        email = f"tg_{telegram_id}@sherik.uz"
+        user = User.objects.filter(email=email).first()
+
+        if not user and username:
+            clean_user = username.lstrip('@')
+            user = User.objects.filter(telegram_username__iexact=f"@{clean_user}").first()
+
+        if not user:
+            user = User.objects.create(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                telegram_username=f"@{username.lstrip('@')}" if username else "",
+                phone_number=phone_number,
+                is_active=True,
+            )
+            user.set_unusable_password()
+            user.save()
+        else:
+            updated = False
+            if phone_number and not user.phone_number:
+                user.phone_number = phone_number
+                updated = True
+            if username and not user.telegram_username:
+                user.telegram_username = f"@{username.lstrip('@')}"
+                updated = True
+            if updated:
+                user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone_number': user.phone_number,
+                'telegram_username': user.telegram_username,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+            }
+        }, status=status.HTTP_200_OK)
+
