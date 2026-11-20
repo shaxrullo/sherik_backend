@@ -73,6 +73,12 @@ class Listing(models.Model):
         default=GenderPreference.ANY,
         verbose_name="Jinsi bo'yicha talab",
     )
+    amenities = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Qulayliklar va jihozlar",
+        help_text="Masalan: ['Wi-Fi', 'Konditsioner', 'Kir yuvish mashinasi']",
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,

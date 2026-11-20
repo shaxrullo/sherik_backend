@@ -4,6 +4,8 @@ Bot: @SheriktopishBot
 """
 import io
 import os
+import threading
+import time
 import requests
 import telebot
 from telebot import types
@@ -24,6 +26,22 @@ CITIES = [
 
 # Vaqtinchalik foydalanuvchi ma'lumotlari saqlash (state)
 user_drafts = {}
+
+
+def _keep_alive_loop():
+    """Render bepul tarifida sayt va backend uxlab qolmasligi uchun fon rejimida har 8 daqiqada ping yuboradi."""
+    time.sleep(5)
+    while True:
+        for url in [MINI_APP_URL, f"{API_BASE_URL}/listings/"]:
+            try:
+                requests.get(url, timeout=12)
+            except Exception:
+                pass
+        time.sleep(480) # 8 daqiqa
+
+
+threading.Thread(target=_keep_alive_loop, daemon=True).start()
+
 
 
 def get_main_menu_keyboard():
@@ -560,3 +578,4 @@ def handle_help_callback(call: types.CallbackQuery):
 if __name__ == "__main__":
     print("🤖 @SheriktopishBot ishga tushmoqda...")
     bot.infinity_polling(skip_pending=True)
+
