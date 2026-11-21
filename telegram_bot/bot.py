@@ -63,6 +63,17 @@ def get_main_menu_keyboard():
 
 @bot.message_handler(commands=['start', 'menu'])
 def handle_start(message: types.Message):
+    try:
+        bot.set_chat_menu_button(
+            chat_id=message.chat.id,
+            menu_button=types.MenuButtonWebApp(
+                type="web_app",
+                text="📱 Ilova",
+                web_app=types.WebAppInfo(url=MINI_APP_URL)
+            )
+        )
+    except Exception:
+        pass
     user_name = message.from_user.first_name or "Foydalanuvchi"
     text = (
         f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
