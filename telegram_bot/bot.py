@@ -368,8 +368,10 @@ def init_user_draft(user):
         "username": user.username or "",
         "amenities": [],
         "currency": "USD",
+        "selected_metros": [],
         "near_subway": "",
         "nearby_universities": [],
+        "photo_file_ids": [],
     }
     return user_drafts[user_id]
 
@@ -808,34 +810,48 @@ def handle_amenities_done(call: types.CallbackQuery):
     render_step_8_metro(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
+def safe_delete_message(chat_id, message_id):
+    try:
+        bot.delete_message(chat_id, message_id)
+    except Exception:
+        pass
+
+
 # ==================== 8-BOSQICH: METRO ====================
 
 def render_step_8_metro(chat_id, user_id, message_id=None):
     bot.clear_step_handler_by_chat_id(chat_id)
     if user_id not in user_drafts:
-        user_drafts[user_id] = {"near_subway": ""}
+        user_drafts[user_id] = {"selected_metros": [], "near_subway": ""}
 
-    current_metro = user_drafts[user_id].get("near_subway", "")
-    metro_hint = f"Tanlangan: <b>{current_metro}</b>\n\n" if current_metro else ""
+    selected = user_drafts[user_id].setdefault("selected_metros", [])
+    if not selected and user_drafts[user_id].get("near_subway"):
+        for m in user_drafts[user_id]["near_subway"].split(","):
+            m_s = m.strip()
+            if m_s and m_s not in selected:
+                selected.append(m_s)
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     chips = []
     for idx, name in enumerate(METRO_STATIONS):
-        is_sel = (name == current_metro)
+        is_sel = name in selected
         label = f"✅ {name}" if is_sel else name
         chips.append(types.InlineKeyboardButton(label, callback_data=f"wiz_metro_{idx}"))
     markup.add(*chips)
 
     markup.row(types.InlineKeyboardButton("➕ Boshqa metro yozish", callback_data="wiz_custom_metro"))
-    markup.row(types.InlineKeyboardButton("❌ Metroga yaqin emas (O'tkazish)", callback_data="wiz_skip_metro"))
+    markup.row(types.InlineKeyboardButton("Davom etish ➡️", callback_data="wiz_metro_done"))
+    markup.row(types.InlineKeyboardButton("⏭️ Metroga yaqin emas (O'tkazish)", callback_data="wiz_skip_metro"))
     markup.row(
         types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_amenities"),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
 
+    sel_str = ", ".join(selected) if selected else "<i>Hozircha tanlanmadi (ixtiyoriy)</i>"
     text = (
-        f"🚇 <b>8-bosqich:</b> Yaqin metro bekati:\n\n"
-        f"{metro_hint}<i>Kvartiraga eng yaqin metro bekatini tanlang yoki o'zingiz yozing:</i>"
+        "🚇 <b>8-bosqich:</b> Yaqin metro bekatlari:\n\n"
+        "<i>Kvartiraga yaqin metro bekatlarini tanlang (bir nechtasini tanlash mumkin) yoki o'zingiz yozing:</i>\n\n"
+        f"Tanlangan metro bekatlari:\n<b>{sel_str}</b>"
     )
 
     if message_id:
@@ -848,15 +864,30 @@ def render_step_8_metro(chat_id, user_id, message_id=None):
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_metro_"))
-def handle_metro_selection(call: types.CallbackQuery):
+def handle_metro_toggle(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id not in user_drafts:
         init_user_draft(call.from_user)
 
     idx = int(call.data.replace("wiz_metro_", ""))
     if 0 <= idx < len(METRO_STATIONS):
-        user_drafts[user_id]["near_subway"] = METRO_STATIONS[idx]
+        item_name = METRO_STATIONS[idx]
+        selected = user_drafts[user_id].setdefault("selected_metros", [])
+        if item_name in selected:
+            selected.remove(item_name)
+        else:
+            selected.append(item_name)
+        user_drafts[user_id]["near_subway"] = ", ".join(selected)
 
+    render_step_8_metro(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_metro_done")
+def handle_metro_done(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id in user_drafts:
+        selected = user_drafts[user_id].get("selected_metros", [])
+        user_drafts[user_id]["near_subway"] = ", ".join(selected)
     render_step_9_universities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
 
 
@@ -864,6 +895,7 @@ def handle_metro_selection(call: types.CallbackQuery):
 def handle_skip_metro(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id in user_drafts:
+        user_drafts[user_id]["selected_metros"] = []
         user_drafts[user_id]["near_subway"] = ""
     render_step_9_universities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
 
@@ -897,10 +929,13 @@ def process_custom_metro_step(message: types.Message):
         return
 
     if len(text) >= 2:
-        user_drafts[user_id]["near_subway"] = text
-        bot.send_message(message.chat.id, f"✅ Tanlangan metro: <b>{text}</b>")
+        selected = user_drafts[user_id].setdefault("selected_metros", [])
+        if text not in selected:
+            selected.append(text)
+        user_drafts[user_id]["near_subway"] = ", ".join(selected)
+        bot.send_message(message.chat.id, f"✅ Qo'shildi: <b>{text}</b>")
 
-    render_step_9_universities(message.chat.id, user_id=user_id)
+    render_step_8_metro(message.chat.id, user_id=user_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_metro")
@@ -1012,24 +1047,40 @@ def handle_back_to_unis(call: types.CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_unis_done")
 def handle_unis_done(call: types.CallbackQuery):
-    render_step_10_photo(call.message.chat.id, message_id=call.message.message_id)
+    render_step_10_photo(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
-# ==================== 10-BOSQICH: RASM ====================
+# ==================== 10-BOSQICH: RASMLAR ====================
 
-def render_step_10_photo(chat_id, message_id=None):
+def render_step_10_photo(chat_id, user_id=None, message_id=None):
     bot.clear_step_handler_by_chat_id(chat_id)
+    photo_count = 0
+    if user_id and user_id in user_drafts:
+        photo_count = len(user_drafts[user_id].get("photo_file_ids", []))
+
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("⏭️ Rasmsiz davom etish", callback_data="wiz_skip_photo"))
+    if photo_count > 0:
+        markup.add(types.InlineKeyboardButton(f"➡️ Davom etish ({photo_count} ta rasm)", callback_data="wiz_photos_done"))
+        markup.add(types.InlineKeyboardButton("🗑 Rasmlarni tozalash", callback_data="wiz_clear_photos"))
+    else:
+        markup.add(types.InlineKeyboardButton("⏭️ Rasmsiz davom etish", callback_data="wiz_skip_photo"))
+
     markup.row(
         types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_unis"),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
 
-    text = (
-        "📸 <b>10-bosqich:</b> Xona rasmini yuboring (ixtiyoriy):\n"
-        "<i>Rasm bo'lmasa, pastdagi 'Rasmsiz davom etish' tugmasini bosing:</i>"
-    )
+    if photo_count > 0:
+        text = (
+            f"📸 <b>10-bosqich:</b> Yuklangan rasmlar: <b>{photo_count} ta</b>\n\n"
+            f"<i>Yana boshqa rasmlar yuborishingiz mumkin. Barcha rasmlarni yuborib bo'lgach, pastdagi <b>«➡️ Davom etish»</b> tugmasini bosing:</i>"
+        )
+    else:
+        text = (
+            "📸 <b>10-bosqich:</b> Xona rasmlarini yuboring (bir yoki bir nechta):\n\n"
+            "<i>Rasmlarni bittalab yoki bir nechta qilib yuborishingiz mumkin. Rasm bo'lmasa, pastdagi 'Rasmsiz davom etish' tugmasini bosing:</i>"
+        )
+
     if message_id:
         try:
             bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup)
@@ -1053,15 +1104,52 @@ def process_photo_step(message: types.Message):
     if text in ["❌ Bekor qilish", "/cancel"]:
         handle_cancel_msg(message)
         return
+    if text in ["➡️ Davom etish", "Davom etish", "/next", "/done"]:
+        render_step_11_phone(message.chat.id, user_id=user_id)
+        return
 
     if message.content_type == 'photo':
         photo = message.photo[-1]
-        user_drafts[user_id]["photo_file_id"] = photo.file_id
-        bot.send_message(message.chat.id, "✅ Rasm qabul qilindi!")
-    else:
-        user_drafts[user_id]["photo_file_id"] = None
+        photo_ids = user_drafts[user_id].setdefault("photo_file_ids", [])
+        photo_ids.append(photo.file_id)
+        user_drafts[user_id]["photo_file_id"] = photo_ids[0]
 
-    render_step_11_phone(message.chat.id)
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(f"➡️ Davom etish ({len(photo_ids)} ta rasm)", callback_data="wiz_photos_done"))
+        markup.row(
+            types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_unis"),
+            types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
+        )
+
+        bot.send_message(
+            message.chat.id,
+            f"✅ Rasm qabul qilindi! Jami: <b>{len(photo_ids)} ta rasm</b>.\n\n"
+            f"<i>Yana rasm yuborishingiz mumkin yoki davom etish uchun pastdagi <b>«➡️ Davom etish»</b> tugmasini bosing:</i>",
+            reply_markup=markup
+        )
+        bot.register_next_step_handler_by_chat_id(message.chat.id, process_photo_step)
+        return
+
+    bot.send_message(
+        message.chat.id,
+        "Iltimos, rasm yuboring yoki pastdagi tugmalardan foydalaning."
+    )
+    render_step_10_photo(message.chat.id, user_id=user_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_photos_done")
+def handle_photos_done(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    render_step_11_phone(call.message.chat.id, user_id=call.from_user.id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_clear_photos")
+def handle_clear_photos(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id in user_drafts:
+        user_drafts[user_id]["photo_file_ids"] = []
+        user_drafts[user_id]["photo_file_id"] = None
+    render_step_10_photo(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_skip_photo")
@@ -1069,13 +1157,14 @@ def handle_skip_photo(call: types.CallbackQuery):
     bot.clear_step_handler_by_chat_id(call.message.chat.id)
     user_id = call.from_user.id
     if user_id in user_drafts:
+        user_drafts[user_id]["photo_file_ids"] = []
         user_drafts[user_id]["photo_file_id"] = None
-    render_step_11_phone(call.message.chat.id)
+    render_step_11_phone(call.message.chat.id, user_id=user_id)
 
 
-# ==================== 11-BOSQICH: TELEFON VA SAQLASH ====================
+# ==================== 11-BOSQICH: TELEFON RAQAM ====================
 
-def render_step_11_phone(chat_id):
+def render_step_11_phone(chat_id, user_id=None):
     bot.clear_step_handler_by_chat_id(chat_id)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(types.KeyboardButton("📱 Telefon raqamimni ulashish", request_contact=True))
@@ -1084,13 +1173,13 @@ def render_step_11_phone(chat_id):
     msg = bot.send_message(
         chat_id,
         "📞 <b>11-bosqich:</b> Bog'lanish uchun telefon raqamingizni yuboring:\n"
-        "<i>Pastdagi tugmani bosing yoki raqamingizni yozing (+998901234567):</i>",
+        "<i>Pastdagi «📱 Telefon raqamimni ulashish» tugmasini bosing yoki raqamingizni yozing (+998901234567):</i>",
         reply_markup=markup
     )
-    bot.register_next_step_handler(msg, process_phone_and_finish)
+    bot.register_next_step_handler(msg, process_phone_step)
 
 
-def process_phone_and_finish(message: types.Message):
+def process_phone_step(message: types.Message):
     user_id = message.from_user.id
     if user_id not in user_drafts:
         bot.send_message(message.chat.id, "Sessiya tugadi. Qaytadan boshlang: /new", reply_markup=types.ReplyKeyboardRemove())
@@ -1099,7 +1188,7 @@ def process_phone_and_finish(message: types.Message):
     text = (message.text or "").strip()
     if text in ["⬅️ Orqaga", "/back"]:
         bot.send_message(message.chat.id, "Orqaga qaytildi.", reply_markup=types.ReplyKeyboardRemove())
-        render_step_10_photo(message.chat.id)
+        render_step_10_photo(message.chat.id, user_id=user_id)
         return
     if text in ["❌ Bekor qilish", "/cancel"]:
         bot.send_message(message.chat.id, "E'lon bekor qilindi.", reply_markup=types.ReplyKeyboardRemove())
@@ -1117,14 +1206,118 @@ def process_phone_and_finish(message: types.Message):
         if not phone.startswith("+") and phone:
             phone = "+" + phone
 
-    user_drafts[user_id]["phone_number"] = phone
+    if len(phone) < 9:
+        msg = bot.send_message(
+            message.chat.id,
+            "❌ Noto'g'ri telefon raqami. Iltimos, tugma orqali yuboring yoki to'liq yozing (+998901234567):"
+        )
+        bot.register_next_step_handler(msg, process_phone_step)
+        return
 
-    # Reply keyboardni tozalaymiz
-    wait_msg = bot.send_message(
-        message.chat.id,
-        "⏳ E'lon saqlanmoqda, kuting...",
-        reply_markup=types.ReplyKeyboardRemove()
+    user_drafts[user_id]["phone_number"] = phone
+    bot.send_message(message.chat.id, "✅ Telefon raqamingiz qabul qilindi.", reply_markup=types.ReplyKeyboardRemove())
+
+    # 12-bosqich: To'liq ko'rib chiqish va tasdiqlash
+    render_step_12_confirm(message.chat.id, user_id=user_id)
+
+
+# ==================== 12-BOSQICH: TASDIQLASH VA SAQLASH ====================
+
+def render_step_12_confirm(chat_id, user_id, message_id=None):
+    bot.clear_step_handler_by_chat_id(chat_id)
+    if user_id not in user_drafts:
+        bot.send_message(chat_id, "Sessiya tugadi. Qaytadan boshlang: /new", reply_markup=get_main_menu_keyboard())
+        return
+
+    draft = user_drafts[user_id]
+
+    type_name = "🏠 Xonam bor (Sherik kerak)" if draft.get("listing_type") == "have_room" else "🔍 Xona kerak (Ijara qidiryapman)"
+    city_name = draft.get("city_name") or dict(CITIES).get(draft.get("city_id", 1), "Toshkent")
+    price_disp = format_price_display(draft.get("price", 0), draft.get("currency", "USD"))
+
+    gender_map = {
+        "male": "👨 Faqat o'g'il bolalar / erkaklar",
+        "female": "👩 Faqat qizlar / ayollar",
+        "any": "🤝 Farqi yo'q"
+    }
+    gender_disp = gender_map.get(draft.get("gender_preference"), "Farqi yo'q")
+
+    amenities = draft.get("amenities", [])
+    amenities_disp = ", ".join(amenities) if amenities else "Kiritilmadi"
+
+    metros = draft.get("selected_metros", [])
+    if not metros and draft.get("near_subway"):
+        metros = [m.strip() for m in draft.get("near_subway", "").split(",") if m.strip()]
+    metro_disp = ", ".join(metros) if metros else "Metroga yaqin emas"
+
+    unis = draft.get("nearby_universities", [])
+    unis_disp = ", ".join(unis) if unis else "Kiritilmadi"
+
+    photos = draft.get("photo_file_ids", [])
+    photos_count = len(photos)
+
+    summary_card = (
+        "📋 <b>E'LONNI TASDIQLASH (12-bosqich)</b>\n\n"
+        "<i>E'lon ma'lumotlarini diqqat bilan tekshiring:</i>\n\n"
+        f"🏷 <b>Sarlavha:</b> {draft.get('title', '')}\n"
+        f"📝 <b>Tavsif:</b> {draft.get('description', '')}\n"
+        f"📌 <b>E'lon turi:</b> {type_name}\n"
+        f"📍 <b>Shahar:</b> {city_name}\n"
+        f"💰 <b>Narxi:</b> {price_disp}\n"
+        f"👥 <b>Kim uchun:</b> {gender_disp}\n"
+        f"🚇 <b>Yaqin metro:</b> {metro_disp}\n"
+        f"🎓 <b>Yaqin OTMlar:</b> {unis_disp}\n"
+        f"🛋 <b>Qulayliklar:</b> {amenities_disp}\n"
+        f"📸 <b>Rasmlar:</b> {photos_count} ta rasm\n"
+        f"📞 <b>Bog'lanish:</b> {draft.get('phone_number', '')}\n\n"
+        "Hammasi to'g'ri bo'lsa, pastdagi <b>«✅ E'lonni saqlash»</b> tugmasini bosing:"
     )
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("✅ E'lonni saqlash", callback_data="wiz_confirm_save"))
+    markup.row(
+        types.InlineKeyboardButton("⬅️ Telefonni o'zgartirish", callback_data="wiz_back_to_phone"),
+        types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
+    )
+
+    if photos:
+        try:
+            bot.send_photo(
+                chat_id=chat_id,
+                photo=photos[0],
+                caption=summary_card,
+                reply_markup=markup
+            )
+            return
+        except Exception:
+            pass
+
+    if message_id:
+        try:
+            bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=summary_card, reply_markup=markup)
+            return
+        except Exception:
+            pass
+    bot.send_message(chat_id=chat_id, text=summary_card, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_phone")
+def handle_back_to_phone(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    render_step_11_phone(call.message.chat.id, user_id=call.from_user.id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_confirm_save")
+def handle_confirm_save(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    chat_id = call.message.chat.id
+    bot.clear_step_handler_by_chat_id(chat_id)
+
+    if user_id not in user_drafts:
+        bot.send_message(chat_id, "Sessiya tugadi. Qaytadan boshlang: /new", reply_markup=get_main_menu_keyboard())
+        return
+
+    wait_msg = bot.send_message(chat_id, "⏳ E'lon saqlanmoqda, kuting...")
 
     draft = user_drafts[user_id]
 
@@ -1132,17 +1325,17 @@ def process_phone_and_finish(message: types.Message):
         # 1. Telegram user orqali backend'dan JWT token olish
         auth_data = {
             "telegram_id": draft.get("telegram_id", user_id),
-            "first_name": draft.get("first_name", message.from_user.first_name or "Telegram User"),
-            "last_name": draft.get("last_name", message.from_user.last_name or ""),
-            "username": draft.get("username", message.from_user.username or ""),
-            "phone_number": phone
+            "first_name": draft.get("first_name", call.from_user.first_name or "Telegram User"),
+            "last_name": draft.get("last_name", call.from_user.last_name or ""),
+            "username": draft.get("username", call.from_user.username or ""),
+            "phone_number": draft.get("phone_number", "")
         }
         auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
 
         if auth_resp.status_code != 200:
-            safe_delete_message(message.chat.id, wait_msg.message_id)
+            safe_delete_message(chat_id, wait_msg.message_id)
             bot.send_message(
-                chat_id=message.chat.id,
+                chat_id=chat_id,
                 text=f"❌ Autentifikatsiya xatosi: {auth_resp.text}",
                 reply_markup=get_main_menu_keyboard()
             )
@@ -1151,7 +1344,11 @@ def process_phone_and_finish(message: types.Message):
         token = auth_resp.json().get("access")
         headers = {"Authorization": f"Bearer {token}"}
 
-        # 2. E'lonni yaratish (amenities, near_subway, nearby_universities va currency bilan)
+        # 2. E'lonni yaratish
+        near_subway = draft.get("near_subway", "")
+        if not near_subway and draft.get("selected_metros"):
+            near_subway = ", ".join(draft.get("selected_metros"))
+
         listing_payload = {
             "title": draft.get("title", "Sherik kerak"),
             "description": draft.get("description", "Kvartiraga sherik kerak"),
@@ -1161,16 +1358,16 @@ def process_phone_and_finish(message: types.Message):
             "currency": draft.get("currency", "USD"),
             "gender_preference": draft.get("gender_preference", "any"),
             "amenities": draft.get("amenities", []),
-            "near_subway": draft.get("near_subway", ""),
+            "near_subway": near_subway,
             "nearby_universities": draft.get("nearby_universities", []),
         }
 
         create_resp = requests.post(f"{API_BASE_URL}/listings/", json=listing_payload, headers=headers, timeout=15)
 
         if create_resp.status_code not in [200, 201]:
-            safe_delete_message(message.chat.id, wait_msg.message_id)
+            safe_delete_message(chat_id, wait_msg.message_id)
             bot.send_message(
-                chat_id=message.chat.id,
+                chat_id=chat_id,
                 text=f"❌ E'lon yaratishda xato: {create_resp.text}",
                 reply_markup=get_main_menu_keyboard()
             )
@@ -1178,17 +1375,20 @@ def process_phone_and_finish(message: types.Message):
 
         listing_id = create_resp.json().get("id")
 
-        # 3. Rasm bo'lsa yuklaymiz
-        photo_id = draft.get("photo_file_id")
-        if photo_id and listing_id:
+        # 3. Rasmlarni yuklash (barcha yuklangan rasmlar)
+        photo_ids = draft.get("photo_file_ids", [])
+        if not photo_ids and draft.get("photo_file_id"):
+            photo_ids = [draft["photo_file_id"]]
+
+        for idx, photo_id in enumerate(photo_ids):
             try:
                 file_info = bot.get_file(photo_id)
                 downloaded_file = bot.download_file(file_info.file_path)
 
                 files = {
-                    "image": ("photo.jpg", io.BytesIO(downloaded_file), "image/jpeg")
+                    "image": (f"photo_{idx}.jpg", io.BytesIO(downloaded_file), "image/jpeg")
                 }
-                data = {"is_main": "true"}
+                data = {"is_main": "true" if idx == 0 else "false"}
                 requests.post(
                     f"{API_BASE_URL}/listings/{listing_id}/photos/",
                     headers=headers,
@@ -1197,10 +1397,11 @@ def process_phone_and_finish(message: types.Message):
                     timeout=30
                 )
             except Exception as pe:
-                print(f"Rasm yuklash xatosi: {pe}")
+                print(f"Rasm #{idx} yuklash xatosi: {pe}")
 
-        # Tugatish
-        del user_drafts[user_id]
+        # Tugatish va tozalash
+        if user_id in user_drafts:
+            del user_drafts[user_id]
 
         price_disp = format_price_display(listing_payload["price"], listing_payload["currency"])
         amenities_disp = ", ".join(listing_payload["amenities"]) if listing_payload["amenities"] else "Yo'q"
@@ -1208,12 +1409,13 @@ def process_phone_and_finish(message: types.Message):
         unis_disp = ", ".join(listing_payload["nearby_universities"]) if listing_payload["nearby_universities"] else "Yo'q"
 
         success_text = (
-            f"🎉 <b>E'loningiz muvaffaqiyatli qabul qilindi!</b>\n\n"
+            f"🎉 <b>E'loningiz muvaffaqiyatli saqlandi!</b>\n\n"
             f"📋 <b>E'lon raqami:</b> #{listing_id}\n"
             f"💰 <b>Narx:</b> {price_disp}\n"
             f"🚇 <b>Yaqin metro:</b> {metro_disp}\n"
             f"🎓 <b>Yaqin OTMlar:</b> {unis_disp}\n"
             f"🛋 <b>Jihozlar:</b> {amenities_disp}\n"
+            f"📸 <b>Yuklangan rasmlar:</b> {len(photo_ids)} ta\n"
             f"📌 <b>Holat:</b> ⏳ Moderatsiyada (kutilmoqda)\n\n"
             f"<i>Adminlarimiz tekshirib tasdiqlagach, e'lon ilovada va botda hamma uchun ko'rinadi!</i>"
         )
@@ -1225,17 +1427,17 @@ def process_phone_and_finish(message: types.Message):
         ))
         fin_markup.add(types.InlineKeyboardButton(text="🏠 Bosh menyu", callback_data="btn_back_to_menu"))
 
-        safe_delete_message(message.chat.id, wait_msg.message_id)
+        safe_delete_message(chat_id, wait_msg.message_id)
         bot.send_message(
-            chat_id=message.chat.id,
+            chat_id=chat_id,
             text=success_text,
             reply_markup=fin_markup
         )
 
     except Exception as e:
-        safe_delete_message(message.chat.id, wait_msg.message_id)
+        safe_delete_message(chat_id, wait_msg.message_id)
         bot.send_message(
-            chat_id=message.chat.id,
+            chat_id=chat_id,
             text=f"❌ Tizim xatosi yuz berdi: {e}",
             reply_markup=get_main_menu_keyboard()
         )
