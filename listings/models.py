@@ -89,6 +89,19 @@ class Listing(models.Model):
         verbose_name="Qulayliklar va jihozlar",
         help_text="Masalan: ['Wi-Fi', 'Konditsioner', 'Kir yuvish mashinasi']",
     )
+    near_subway = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name="Yaqin metro bekati",
+        help_text="Masalan: Chilonzor, Novza yoki bo'sh",
+    )
+    nearby_universities = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Yaqin o'qish joylari (OTM)",
+        help_text="Masalan: ['TATU', 'O'zMU', 'TDTU']",
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
