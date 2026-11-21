@@ -266,11 +266,52 @@ METRO_STATIONS = [
     "Shahriston", "Bodomzor", "Amir Temur", "Do'stlik"
 ]
 
-POPULAR_UNIVERSITIES = [
-    "TATU", "O'zMU", "TDTU (Politex)", "TDPU (Nizomiy)",
-    "TDIU (Narxoz)", "O'zDJTU (Jahon tillari)", "TMA (Med)", "Inha",
-    "Vestminster (WIUT)", "Turin", "O'zJOKU", "Singapur (MDIST)"
-]
+CITY_UNIVERSITIES = {
+    1: [  # Toshkent
+        "TATU", "O'zMU", "TDTU (Politex)", "TDPU (Nizomiy)",
+        "TDIU (Narxoz)", "O'zDJTU (Jahon tillari)", "TMA (Med)", "Inha",
+        "Vestminster (WIUT)", "Turin", "O'zJOKU", "Singapur (MDIST)"
+    ],
+    2: [  # Samarqand
+        "SamDU", "SamDTI (Med)", "SamISI (Iqtisod)", "SamDAQI",
+        "SamCHTI (Chet tillari)", "Ipak Yo'li Turizm Univ", "TATU Samarqand f."
+    ],
+    3: [  # Buxoro
+        "BuxDU", "BuxMTI", "BuxDTI (Med)", "BuxITMU", "Buxoro Davlat Pedagogika"
+    ],
+    4: [  # Andijon
+        "ADU", "ADTI (Tibbiyot)", "AndMI (Mashinasozlik)", "AndQXAI"
+    ],
+    5: [  # Namangan
+        "NamDU", "NamMQI", "NamMTI", "Namangan Chet Tillari"
+    ],
+    6: [  # Farg'ona
+        "FarDU", "FarPI", "TATU Farg'ona f.", "Qo'qon DPI", "TMA Farg'ona f."
+    ],
+    7: [  # Qashqadaryo
+        "QarDU", "QarMII (Muhandislik)", "TATU Qarshi f.", "Qarshi Pedagogika"
+    ],
+    8: [  # Surxondaryo
+        "TerDU", "TerDPI", "TerMI (Muhandislik)", "Termiz Agrotex"
+    ],
+    9: [  # Xorazm
+        "UrDU", "TATU Urganch f.", "TMA Urganch f."
+    ],
+    10: [  # Jizzax
+        "JizDPU", "JizPI (Politex)", "O'zMU Jizzax f.", "Sambhram Univ"
+    ],
+    11: [  # Sirdaryo
+        "GulDU (Guliston davlat)", "GulDPI", "Toshkent Kimyo Guliston f."
+    ],
+    12: [  # Navoiy
+        "NavDKTU (Konchilik)", "NavDPI"
+    ],
+    13: [  # Qoraqalpog'iston
+        "QDU (Berdaq)", "NMPI (Ajdiniyaz)", "Qoraqalpoq QXAI", "TATU Nukus f.", "TMA Nukus f."
+    ]
+}
+
+POPULAR_UNIVERSITIES = CITY_UNIVERSITIES[1]
 
 
 # ==================== E'LONLARNI KO'RISH ====================
@@ -366,6 +407,8 @@ def init_user_draft(user):
         "first_name": user.first_name or "",
         "last_name": user.last_name or "",
         "username": user.username or "",
+        "capacity": 1,
+        "total_residents": 2,
         "amenities": [],
         "currency": "USD",
         "selected_metros": [],
@@ -690,7 +733,149 @@ def handle_gender_step(call: types.CallbackQuery):
     gender_map = {"wiz_gender_male": "male", "wiz_gender_female": "female", "wiz_gender_any": "any"}
     user_drafts[user_id]["gender_preference"] = gender_map[call.data]
 
+    render_step_6b_capacity(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+
+
+# ==================== 6B-BOSQICH: NECHTA SHERIK KERAK ====================
+
+def render_step_6b_capacity(chat_id, user_id, message_id=None):
+    bot.clear_step_handler_by_chat_id(chat_id)
+    if user_id not in user_drafts:
+        user_drafts[user_id] = {"capacity": 1}
+
+    draft = user_drafts[user_id]
+    is_have = draft.get("listing_type") == "have_room"
+
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    markup.add(
+        types.InlineKeyboardButton("1 nafar", callback_data="wiz_cap_1"),
+        types.InlineKeyboardButton("2 nafar", callback_data="wiz_cap_2"),
+        types.InlineKeyboardButton("3 nafar", callback_data="wiz_cap_3"),
+        types.InlineKeyboardButton("4 nafar", callback_data="wiz_cap_4"),
+        types.InlineKeyboardButton("5+ nafar", callback_data="wiz_cap_5"),
+        types.InlineKeyboardButton("✏️ Boshqa son", callback_data="wiz_cap_custom")
+    )
+    markup.row(
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_gender"),
+        types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
+    )
+
+    if is_have:
+        text = "👥 <b>6B-bosqich:</b> Nechta sherik kerak?\n\n<i>Xonaga nechta kishi qabul qilmoqchisiz:</i>"
+    else:
+        text = "👥 <b>6B-bosqich:</b> Necha kishi bo'lib joy qidiryapsiz?\n\n<i>(O'zingiz bilan birga turadiganlar soni):</i>"
+
+    if message_id:
+        try:
+            bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup)
+            return
+        except Exception:
+            pass
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_cap_"))
+def handle_capacity_choice(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id not in user_drafts:
+        init_user_draft(call.from_user)
+
+    val_str = call.data.replace("wiz_cap_", "")
+    if val_str == "custom":
+        msg = bot.send_message(call.message.chat.id, "✏️ <b>Nechta sherik kerakligini raqamda yozing:</b>\n<i>(Masalan: 1, 2, 4...)</i>")
+        bot.register_next_step_handler(msg, process_custom_capacity_step)
+        return
+
+    try:
+        user_drafts[user_id]["capacity"] = int(val_str)
+    except Exception:
+        user_drafts[user_id]["capacity"] = 1
+
+    render_step_6c_residents(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+
+
+def process_custom_capacity_step(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in user_drafts:
+        return
+    text = (message.text or "").strip()
+    digits = "".join(c for c in text if c.isdigit())
+    val = int(digits) if digits else 1
+    user_drafts[user_id]["capacity"] = max(1, min(val, 50))
+    render_step_6c_residents(message.chat.id, user_id=user_id)
+
+
+# ==================== 6C-BOSQICH: JAMI NECHTA ODAM TURADI ====================
+
+def render_step_6c_residents(chat_id, user_id, message_id=None):
+    bot.clear_step_handler_by_chat_id(chat_id)
+    if user_id not in user_drafts:
+        user_drafts[user_id] = {"total_residents": 2}
+
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    markup.add(
+        types.InlineKeyboardButton("Jami 1 kishi", callback_data="wiz_tot_1"),
+        types.InlineKeyboardButton("Jami 2 kishi", callback_data="wiz_tot_2"),
+        types.InlineKeyboardButton("Jami 3 kishi", callback_data="wiz_tot_3"),
+        types.InlineKeyboardButton("Jami 4 kishi", callback_data="wiz_tot_4"),
+        types.InlineKeyboardButton("Jami 5 kishi", callback_data="wiz_tot_5"),
+        types.InlineKeyboardButton("Jami 6+ kishi", callback_data="wiz_tot_6"),
+        types.InlineKeyboardButton("✏️ Boshqa son", callback_data="wiz_tot_custom")
+    )
+    markup.row(
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_cap"),
+        types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
+    )
+
+    text = (
+        "🏠 <b>6C-bosqich:</b> Kvartirada umumiy hisobda jami nechta odam turadi?\n\n"
+        "<i>(O'zingiz + sheriklar va barcha birga yashovchilar soni):</i>"
+    )
+
+    if message_id:
+        try:
+            bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup)
+            return
+        except Exception:
+            pass
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_tot_"))
+def handle_residents_choice(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id not in user_drafts:
+        init_user_draft(call.from_user)
+
+    val_str = call.data.replace("wiz_tot_", "")
+    if val_str == "custom":
+        msg = bot.send_message(call.message.chat.id, "✏️ <b>Kvartirada jami yashaydiganlar sonini yozing:</b>\n<i>(Masalan: 3, 5, 8...)</i>")
+        bot.register_next_step_handler(msg, process_custom_residents_step)
+        return
+
+    try:
+        user_drafts[user_id]["total_residents"] = int(val_str)
+    except Exception:
+        user_drafts[user_id]["total_residents"] = 2
+
     render_step_7_amenities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+
+
+def process_custom_residents_step(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in user_drafts:
+        return
+    text = (message.text or "").strip()
+    digits = "".join(c for c in text if c.isdigit())
+    val = int(digits) if digits else 2
+    user_drafts[user_id]["total_residents"] = max(1, min(val, 100))
+    render_step_7_amenities(message.chat.id, user_id=user_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_cap")
+def handle_back_to_capacity(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    render_step_6b_capacity(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
 # ==================== 7-BOSQICH: JIHOZLAR (AMENITIES) ====================
@@ -717,7 +902,7 @@ def render_step_7_amenities(chat_id, user_id, message_id=None):
         types.InlineKeyboardButton("Davom etish ➡️", callback_data="wiz_amenities_done")
     )
     markup.row(
-        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_gender"),
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_residents"),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
 
@@ -799,6 +984,12 @@ def handle_back_to_amenities(call: types.CallbackQuery):
     render_step_7_amenities(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_residents")
+def handle_back_to_residents(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    render_step_6c_residents(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_gender")
 def handle_back_to_gender(call: types.CallbackQuery):
     bot.clear_step_handler_by_chat_id(call.message.chat.id)
@@ -807,7 +998,15 @@ def handle_back_to_gender(call: types.CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_amenities_done")
 def handle_amenities_done(call: types.CallbackQuery):
-    render_step_8_metro(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
+    user_id = call.from_user.id
+    city_id = user_drafts.get(user_id, {}).get("city_id", 1)
+    if city_id == 1:
+        render_step_8_metro(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+    else:
+        if user_id in user_drafts:
+            user_drafts[user_id]["selected_metros"] = []
+            user_drafts[user_id]["near_subway"] = ""
+        render_step_9_universities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
 
 
 def safe_delete_message(chat_id, message_id):
@@ -952,10 +1151,13 @@ def render_step_9_universities(chat_id, user_id, message_id=None):
         user_drafts[user_id] = {"nearby_universities": []}
 
     selected = user_drafts[user_id].get("nearby_universities", [])
+    city_id = user_drafts[user_id].get("city_id", 1)
+    city_name = user_drafts[user_id].get("city_name") or dict(CITIES).get(city_id, "Toshkent")
+    uni_list = CITY_UNIVERSITIES.get(city_id, CITY_UNIVERSITIES[1])
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     chips = []
-    for idx, name in enumerate(POPULAR_UNIVERSITIES):
+    for idx, name in enumerate(uni_list):
         is_sel = name in selected
         label = f"✅ {name}" if is_sel else name
         chips.append(types.InlineKeyboardButton(label, callback_data=f"wiz_uni_{idx}"))
@@ -963,15 +1165,17 @@ def render_step_9_universities(chat_id, user_id, message_id=None):
 
     markup.row(types.InlineKeyboardButton("➕ Boshqa OTM yozish", callback_data="wiz_custom_uni"))
     markup.row(types.InlineKeyboardButton("Davom etish ➡️", callback_data="wiz_unis_done"))
+    
+    back_cb = "wiz_back_to_metro" if city_id == 1 else "wiz_back_to_amenities"
     markup.row(
-        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_metro"),
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data=back_cb),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
 
     sel_str = ", ".join(selected) if selected else "<i>Hozircha tanlanmadi (ixtiyoriy)</i>"
     text = (
-        "🎓 <b>9-bosqich:</b> Yaqin o'qish joylari (OTM / Universitetlar):\n\n"
-        "<i>Talabalar uchun qulay bo'lishi uchun yaqin oliygohlarni tanlang (bir nechtasini tanlash mumkin):</i>\n\n"
+        f"🎓 <b>9-bosqich:</b> Yaqin o'qish joylari ({city_name}):\n\n"
+        f"<i>Talabalar uchun qulay bo'lishi uchun yaqin oliygohlarni tanlang:</i>\n\n"
         f"Tanlangan OTMlar:\n<b>{sel_str}</b>"
     )
 
@@ -990,9 +1194,12 @@ def handle_uni_toggle(call: types.CallbackQuery):
     if user_id not in user_drafts:
         init_user_draft(call.from_user)
 
+    city_id = user_drafts[user_id].get("city_id", 1)
+    uni_list = CITY_UNIVERSITIES.get(city_id, CITY_UNIVERSITIES[1])
+
     idx = int(call.data.replace("wiz_uni_", ""))
-    if 0 <= idx < len(POPULAR_UNIVERSITIES):
-        item_name = POPULAR_UNIVERSITIES[idx]
+    if 0 <= idx < len(uni_list):
+        item_name = uni_list[idx]
         selected = user_drafts[user_id].setdefault("nearby_universities", [])
         if item_name in selected:
             selected.remove(item_name)
@@ -1265,6 +1472,8 @@ def render_step_12_confirm(chat_id, user_id, message_id=None):
         f"📍 <b>Shahar:</b> {city_name}\n"
         f"💰 <b>Narxi:</b> {price_disp}\n"
         f"👥 <b>Kim uchun:</b> {gender_disp}\n"
+        f"👥 <b>Talab qilinadigan sherik:</b> {draft.get('capacity', 1)} nafar\n"
+        f"🏠 <b>Kvartirada jami yashovchilar:</b> {draft.get('total_residents', 2)} kishi\n"
         f"🚇 <b>Yaqin metro:</b> {metro_disp}\n"
         f"🎓 <b>Yaqin OTMlar:</b> {unis_disp}\n"
         f"🛋 <b>Qulayliklar:</b> {amenities_disp}\n"
@@ -1356,6 +1565,8 @@ def handle_confirm_save(call: types.CallbackQuery):
             "city_id": draft.get("city_id", 1),
             "price": draft.get("price", 100),
             "currency": draft.get("currency", "USD"),
+            "capacity": draft.get("capacity", 1),
+            "total_residents": draft.get("total_residents", 2),
             "gender_preference": draft.get("gender_preference", "any"),
             "amenities": draft.get("amenities", []),
             "near_subway": near_subway,
@@ -1459,7 +1670,10 @@ def handle_cancel_msg(message: types.Message):
 @bot.callback_query_handler(func=lambda call: call.data == "btn_my_listings")
 def handle_my_listings(call: types.CallbackQuery):
     user_id = call.from_user.id
-    wait_msg = bot.send_message(call.message.chat.id, "Yuklanmoqda...")
+    chat_id = call.message.chat.id
+    bot.clear_step_handler_by_chat_id(chat_id)
+
+    wait_msg = bot.send_message(chat_id, "⏳ E'lonlaringiz yuklanmoqda...")
 
     try:
         auth_data = {
@@ -1468,50 +1682,300 @@ def handle_my_listings(call: types.CallbackQuery):
             "username": call.from_user.username or "",
         }
         auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
+        if auth_resp.status_code != 200:
+            safe_delete_message(chat_id, wait_msg.message_id)
+            bot.send_message(chat_id, "❌ Tizimga ulanishda xatolik yuz berdi.", reply_markup=get_main_menu_keyboard())
+            return
+
+        token = auth_resp.json().get("access")
+        headers = {"Authorization": f"Bearer {token}"}
+        my_resp = requests.get(f"{API_BASE_URL}/listings/my/", headers=headers, timeout=15)
+
+        safe_delete_message(chat_id, wait_msg.message_id)
+
+        if my_resp.status_code != 200:
+            bot.send_message(chat_id, "❌ E'lonlarni olishda xatolik yuz berdi.", reply_markup=get_main_menu_keyboard())
+            return
+
+        results = my_resp.json().get("results", [])
+        if not results:
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("📋 Yangi e'lon berish", callback_data="btn_new_listing"))
+            markup.add(types.InlineKeyboardButton("🏠 Bosh menyu", callback_data="btn_back_to_menu"))
+            bot.send_message(
+                chat_id=chat_id,
+                text="📭 <b>Sizda hali e'lonlar mavjud emas.</b>\n\nBirinchi e'loningizni joylashtirish uchun pastdagi tugmani bosing:",
+                reply_markup=markup
+            )
+            return
+
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"👤 <b>Sizning e'lonlaringiz (jami {len(results)} ta):</b>\n\n<i>Har bir e'lonni tahrirlashingiz, o'chirishingiz yoki ilovada ko'rishingiz mumkin:</i>"
+        )
+
+        status_map = {
+            "pending": "⏳ Moderatsiyada (kutilmoqda)",
+            "approved": "✅ Faol va tasdiqlangan",
+            "rejected": "❌ Rad etilgan",
+            "closed": "🔒 Yopilgan / Arxivda"
+        }
+
+        for l in results:
+            lid = l.get("id")
+            type_icon = "🏠 Xonam bor (Sherik kerak)" if l.get("listing_type") == "have_room" else "🔍 Xona kerak (Ijara qidiryapman)"
+            price_disp = format_price_display(l.get('price', 0), l.get('currency', 'USD'))
+            st_text = status_map.get(l.get("moderation_status"), l.get("moderation_status"))
+
+            city_name = l.get("city_name") or "O'zbekiston"
+            metro_line = f"\n🚇 <b>Metro:</b> {l.get('near_subway')}" if l.get('near_subway') else ""
+            unis = l.get("nearby_universities", [])
+            unis_line = f"\n🎓 <b>OTM:</b> {', '.join(unis)}" if unis else ""
+            cap = l.get("capacity", 1)
+            tot = l.get("total_residents", 2)
+            rej_line = f"\n⚠️ <b>Rad etish sababi:</b> {l.get('rejection_reason')}" if l.get('rejection_reason') else ""
+
+            card_text = (
+                f"<b>{l.get('title')}</b>\n\n"
+                f"📌 <b>Turi:</b> {type_icon}\n"
+                f"📍 <b>Shahar:</b> {city_name}\n"
+                f"💰 <b>Narxi:</b> {price_disp}\n"
+                f"👥 <b>Talab:</b> {cap} nafar sherik | Jami yashovchilar: {tot} kishi\n"
+                f"📊 <b>Holat:</b> {st_text}{rej_line}"
+                f"{metro_line}{unis_line}\n\n"
+                f"🆔 <b>ID:</b> #{lid}"
+            )
+
+            item_markup = types.InlineKeyboardMarkup()
+            item_markup.row(
+                types.InlineKeyboardButton("✏️ Tahrirlash", callback_data=f"my_edit_{lid}"),
+                types.InlineKeyboardButton("🗑 O'chirish", callback_data=f"my_del_{lid}")
+            )
+            item_markup.row(
+                types.InlineKeyboardButton("📱 Ilovada ko'rish", web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/listings/{lid}"))
+            )
+
+            main_photo = l.get("main_photo")
+            if main_photo:
+                try:
+                    bot.send_photo(chat_id, photo=main_photo, caption=card_text, reply_markup=item_markup)
+                except Exception:
+                    bot.send_message(chat_id, card_text, reply_markup=item_markup)
+            else:
+                bot.send_message(chat_id, card_text, reply_markup=item_markup)
+
+        # Navigatsiya
+        fin_markup = types.InlineKeyboardMarkup(row_width=2)
+        fin_markup.add(
+            types.InlineKeyboardButton("➕ Yangi e'lon", callback_data="btn_new_listing"),
+            types.InlineKeyboardButton("🏠 Bosh menyu", callback_data="btn_back_to_menu")
+        )
+        bot.send_message(chat_id, "📌 Amallar:", reply_markup=fin_markup)
+
+    except Exception as e:
+        safe_delete_message(chat_id, wait_msg.message_id)
+        bot.send_message(chat_id, f"❌ Xatolik yuz berdi: {e}", reply_markup=get_main_menu_keyboard())
+
+
+# ==================== E'LONNI TAHRIRLASH VA O'CHIRISH ====================
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("my_edit_"))
+def handle_my_listing_edit_menu(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    lid = int(call.data.replace("my_edit_", ""))
+
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("💰 Narxni o'zgartirish", callback_data=f"medt_p_{lid}"),
+        types.InlineKeyboardButton("🏷 Sarlavhani o'zgartirish", callback_data=f"medt_t_{lid}"),
+        types.InlineKeyboardButton("📝 Tavsifni o'zgartirish", callback_data=f"medt_d_{lid}"),
+        types.InlineKeyboardButton("👥 Sheriklar sonini o'zgartirish", callback_data=f"medt_c_{lid}"),
+        types.InlineKeyboardButton("⬅️ E'lonlarimga qaytish", callback_data="btn_my_listings")
+    )
+    bot.send_message(
+        call.message.chat.id,
+        f"✏️ <b>#{lid} — E'lonni tahrirlash:</b>\n\nNimani o'zgartirmoqchisiz?",
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("medt_p_"))
+def handle_edit_price_prompt(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    lid = int(call.data.replace("medt_p_", ""))
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"my_edit_{lid}"))
+    msg = bot.send_message(
+        call.message.chat.id,
+        f"💰 <b>#{lid} — Yangi narxni kiriting:</b>\n<i>(Masalan: 120 yoki 1500000)</i>",
+        reply_markup=markup
+    )
+    bot.register_next_step_handler(msg, process_edit_price, lid)
+
+
+def process_edit_price(message: types.Message, listing_id: int):
+    text = (message.text or "").strip()
+    digits = "".join(c for c in text if c.isdigit())
+    if not digits:
+        msg = bot.send_message(message.chat.id, "❌ Iltimos, narxni faqat raqamlarda kiriting:")
+        bot.register_next_step_handler(msg, process_edit_price, listing_id)
+        return
+
+    new_price = int(digits)
+    _patch_listing(message.chat.id, message.from_user, listing_id, {"price": new_price})
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("medt_t_"))
+def handle_edit_title_prompt(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    lid = int(call.data.replace("medt_t_", ""))
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"my_edit_{lid}"))
+    msg = bot.send_message(
+        call.message.chat.id,
+        f"🏷 <b>#{lid} — Yangi sarlavhani yozing:</b>\n<i>(Kamida 5 ta belgi)</i>",
+        reply_markup=markup
+    )
+    bot.register_next_step_handler(msg, process_edit_title, lid)
+
+
+def process_edit_title(message: types.Message, listing_id: int):
+    title = (message.text or "").strip()
+    if len(title) < 5:
+        msg = bot.send_message(message.chat.id, "❌ Sarlavha juda qisqa. Kamida 5 ta belgi yozing:")
+        bot.register_next_step_handler(msg, process_edit_title, listing_id)
+        return
+
+    _patch_listing(message.chat.id, message.from_user, listing_id, {"title": title})
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("medt_d_"))
+def handle_edit_desc_prompt(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    lid = int(call.data.replace("medt_d_", ""))
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"my_edit_{lid}"))
+    msg = bot.send_message(
+        call.message.chat.id,
+        f"📝 <b>#{lid} — Yangi tavsifni yozing:</b>\n<i>(Kamida 10 ta belgi)</i>",
+        reply_markup=markup
+    )
+    bot.register_next_step_handler(msg, process_edit_desc, lid)
+
+
+def process_edit_desc(message: types.Message, listing_id: int):
+    desc = (message.text or "").strip()
+    if len(desc) < 10:
+        msg = bot.send_message(message.chat.id, "❌ Tavsif juda qisqa. Kamida 10 ta belgi yozing:")
+        bot.register_next_step_handler(msg, process_edit_desc, listing_id)
+        return
+
+    _patch_listing(message.chat.id, message.from_user, listing_id, {"description": desc})
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("medt_c_"))
+def handle_edit_cap_menu(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    lid = int(call.data.replace("medt_c_", ""))
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    markup.add(
+        types.InlineKeyboardButton("1 nafar", callback_data=f"mset_c_{lid}_1"),
+        types.InlineKeyboardButton("2 nafar", callback_data=f"mset_c_{lid}_2"),
+        types.InlineKeyboardButton("3 nafar", callback_data=f"mset_c_{lid}_3"),
+        types.InlineKeyboardButton("4 nafar", callback_data=f"mset_c_{lid}_4"),
+        types.InlineKeyboardButton("5+ nafar", callback_data=f"mset_c_{lid}_5"),
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data=f"my_edit_{lid}")
+    )
+    bot.send_message(
+        call.message.chat.id,
+        f"👥 <b>#{lid} — Nechta sherik kerakligini tanlang:</b>",
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("mset_c_"))
+def handle_set_cap(call: types.CallbackQuery):
+    parts = call.data.split("_")
+    lid = int(parts[2])
+    cap = int(parts[3])
+    _patch_listing(call.message.chat.id, call.from_user, lid, {"capacity": cap})
+
+
+def _patch_listing(chat_id, user, listing_id, patch_data):
+    try:
+        auth_data = {
+            "telegram_id": user.id,
+            "first_name": user.first_name or "",
+            "username": user.username or "",
+        }
+        auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
         if auth_resp.status_code == 200:
             token = auth_resp.json().get("access")
             headers = {"Authorization": f"Bearer {token}"}
-            my_resp = requests.get(f"{API_BASE_URL}/listings/my/", headers=headers, timeout=15)
-            if my_resp.status_code == 200:
-                results = my_resp.json().get("results", [])
-                if not results:
-                    bot.edit_message_text(
-                        chat_id=call.message.chat.id,
-                        message_id=wait_msg.message_id,
-                        text="📭 Siz hali e'lon joylashtirmagansiz.\n\nE'lon joylash uchun /new buyrug'ini bosing.",
-                        reply_markup=get_main_menu_keyboard()
-                    )
-                    return
-
-                text = f"👤 <b>Sizning e'lonlaringiz ({len(results)} ta):</b>\n\n"
-                status_map = {"pending": "⏳ Moderatsiyada", "approved": "✅ Tasdiqlangan", "rejected": "❌ Rad etilgan"}
-                for l in results:
-                    price_display = format_price_display(l.get('price', 0), l.get('currency', 'USD'))
-                    text += (
-                        f"• <b>{l.get('title')}</b>\n"
-                        f"   Holat: {status_map.get(l.get('moderation_status'), l.get('moderation_status'))}\n"
-                        f"   Narx: {price_display} | ID: #{l.get('id')}\n\n"
-                    )
-                bot.edit_message_text(
-                    chat_id=call.message.chat.id,
-                    message_id=wait_msg.message_id,
-                    text=text,
-                    reply_markup=get_main_menu_keyboard()
+            resp = requests.patch(f"{API_BASE_URL}/listings/{listing_id}/", json=patch_data, headers=headers, timeout=15)
+            if resp.status_code in [200, 204]:
+                markup = types.InlineKeyboardMarkup()
+                markup.add(types.InlineKeyboardButton("👤 Mening e'lonlarim", callback_data="btn_my_listings"))
+                markup.add(types.InlineKeyboardButton("🏠 Bosh menyu", callback_data="btn_back_to_menu"))
+                bot.send_message(
+                    chat_id,
+                    f"✅ <b>#{listing_id} raqamli e'lon muvaffaqiyatli tahrirlandi!</b>",
+                    reply_markup=markup
                 )
                 return
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=wait_msg.message_id,
-            text="❌ Ma'lumotlarni olishda xatolik yuz berdi.",
-            reply_markup=get_main_menu_keyboard()
-        )
+            else:
+                bot.send_message(chat_id, f"❌ Tahrirlashda xato: {resp.text}")
+                return
+        bot.send_message(chat_id, "❌ Autentifikatsiya xatosi yuz berdi.")
     except Exception as e:
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=wait_msg.message_id,
-            text=f"Xatolik: {e}",
-            reply_markup=get_main_menu_keyboard()
-        )
+        bot.send_message(chat_id, f"❌ Xatolik: {e}")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("my_del_") and not call.data.startswith("my_del_confirm_"))
+def handle_del_prompt(call: types.CallbackQuery):
+    lid = int(call.data.replace("my_del_", ""))
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        types.InlineKeyboardButton("🗑 Ha, o'chirish", callback_data=f"my_del_confirm_{lid}"),
+        types.InlineKeyboardButton("❌ Yo'q, bekor qilish", callback_data="btn_my_listings")
+    )
+    bot.send_message(
+        call.message.chat.id,
+        f"⚠️ <b>#{lid} raqamli e'lonni rostdan ham o'chirmoqchimisiz?</b>\n\nBu amalni ortga qaytarib bo'lmaydi.",
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("my_del_confirm_"))
+def handle_del_confirm(call: types.CallbackQuery):
+    lid = int(call.data.replace("my_del_confirm_", ""))
+    chat_id = call.message.chat.id
+    try:
+        auth_data = {
+            "telegram_id": call.from_user.id,
+            "first_name": call.from_user.first_name or "",
+            "username": call.from_user.username or "",
+        }
+        auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
+        if auth_resp.status_code == 200:
+            token = auth_resp.json().get("access")
+            headers = {"Authorization": f"Bearer {token}"}
+            del_resp = requests.delete(f"{API_BASE_URL}/listings/{lid}/", headers=headers, timeout=15)
+            if del_resp.status_code in [200, 204]:
+                markup = types.InlineKeyboardMarkup()
+                markup.add(types.InlineKeyboardButton("👤 E'lonlarimga qaytish", callback_data="btn_my_listings"))
+                bot.send_message(
+                    chat_id,
+                    f"🗑 <b>#{lid} raqamli e'lon muvaffaqiyatli o'chirildi!</b>",
+                    reply_markup=markup
+                )
+                return
+            else:
+                bot.send_message(chat_id, f"❌ O'chirishda xatolik: {del_resp.text}")
+                return
+        bot.send_message(chat_id, "❌ Autentifikatsiya xatosi.")
+    except Exception as e:
+        bot.send_message(chat_id, f"❌ Xatolik: {e}")
 
 
 @bot.callback_query_handler(func=lambda call: call.data in ["cancel_action", "btn_back_to_menu"])

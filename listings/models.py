@@ -77,6 +77,13 @@ class Listing(models.Model):
         default=1,
         verbose_name="Nechta kishiga mo'ljallangan / kerak",
     )
+    total_residents = models.PositiveSmallIntegerField(
+        default=1,
+        null=True,
+        blank=True,
+        verbose_name="Umumiy yashovchilar soni (jami)",
+        help_text="Kvartirada jami yashovchilar soni",
+    )
     gender_preference = models.CharField(
         max_length=10,
         choices=GenderPreference.choices,
