@@ -350,6 +350,7 @@ def handle_skip_photo(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id in user_drafts:
         user_drafts[user_id]["photo_file_id"] = None
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
     ask_phone_step(call.message.chat.id)
 
 
@@ -362,6 +363,7 @@ def safe_delete_message(chat_id, message_id):
 
 
 def ask_phone_step(chat_id):
+    bot.clear_step_handler_by_chat_id(chat_id)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(types.KeyboardButton("📱 Telefon raqamimni ulashish", request_contact=True))
 
@@ -386,7 +388,11 @@ def process_phone_and_finish(message: types.Message):
         if not phone.startswith("+"):
             phone = "+" + phone
     elif message.text:
-        phone = message.text.strip()
+        # Faqat raqamlar va + belgisini qoldiramiz (masalan oxiridagi nuqtalarni tozalash)
+        raw = message.text.strip()
+        phone = "".join(c for c in raw if c.isdigit() or c == "+")
+        if not phone.startswith("+") and phone:
+            phone = "+" + phone
 
     user_drafts[user_id]["phone_number"] = phone
 
@@ -402,10 +408,10 @@ def process_phone_and_finish(message: types.Message):
     try:
         # 1. Telegram user orqali backend'dan JWT token olish
         auth_data = {
-            "telegram_id": draft["telegram_id"],
-            "first_name": draft.get("first_name", "Telegram User"),
-            "last_name": draft.get("last_name", ""),
-            "username": draft.get("username", ""),
+            "telegram_id": draft.get("telegram_id", user_id),
+            "first_name": draft.get("first_name", message.from_user.first_name or "Telegram User"),
+            "last_name": draft.get("last_name", message.from_user.last_name or ""),
+            "username": draft.get("username", message.from_user.username or ""),
             "phone_number": phone
         }
         auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
@@ -424,12 +430,12 @@ def process_phone_and_finish(message: types.Message):
 
         # 2. E'lonni yaratish
         listing_payload = {
-            "title": draft["title"],
-            "description": draft["description"],
-            "listing_type": draft["listing_type"],
-            "city_id": draft["city_id"],
-            "price": draft["price"],
-            "gender_preference": draft["gender_preference"],
+            "title": draft.get("title", "Sherik kerak"),
+            "description": draft.get("description", "Kvartiraga sherik kerak"),
+            "listing_type": draft.get("listing_type", "have_room"),
+            "city_id": draft.get("city_id", 1),
+            "price": draft.get("price", 100),
+            "gender_preference": draft.get("gender_preference", "any"),
         }
 
         create_resp = requests.post(f"{API_BASE_URL}/listings/", json=listing_payload, headers=headers, timeout=15)
@@ -473,7 +479,7 @@ def process_phone_and_finish(message: types.Message):
             f"🎉 <b>E'loningiz muvaffaqiyatli qabul qilindi!</b>\n\n"
             f"📋 <b>E'lon raqami:</b> #{listing_id}\n"
             f"📌 <b>Holat:</b> ⏳ Moderatsiyada (kutilmoqda)\n\n"
-            f"<i>Adminlarimiz tekshirib tasdiqlagach, e'lon saytda va botda hamma uchun ko'rinadi!</i>"
+            f"<i>Adminlarimiz tekshirib tasdiqlagach, e'lon ilovada va botda hamma uchun ko'rinadi!</i>"
         )
 
         fin_markup = types.InlineKeyboardMarkup()
@@ -559,14 +565,22 @@ def handle_my_listings(call: types.CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data in ["cancel_action", "btn_back_to_menu"])
 def handle_cancel(call: types.CallbackQuery):
     user_id = call.from_user.id
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
     if user_id in user_drafts:
         del user_drafts[user_id]
-    bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text="📌 Asosiy menyu:",
-        reply_markup=get_main_menu_keyboard()
-    )
+    try:
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text="📌 Asosiy menyu:",
+            reply_markup=get_main_menu_keyboard()
+        )
+    except Exception:
+        bot.send_message(
+            chat_id=call.message.chat.id,
+            text="📌 Asosiy menyu:",
+            reply_markup=get_main_menu_keyboard()
+        )
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "btn_help")
