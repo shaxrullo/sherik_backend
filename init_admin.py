@@ -7,7 +7,12 @@ django.setup()
 from users.models import User
 
 email = os.environ.get('ADMIN_EMAIL', 'admin@sherik.uz')
-password = os.environ.get('ADMIN_PASSWORD', 'admin12345')
+password = os.environ.get('ADMIN_PASSWORD')
+
+if not password:
+    import secrets
+    password = secrets.token_urlsafe(16)
+    print(f'>>> DIQQAT: ADMIN_PASSWORD berilmagan, avtomatik xavfsiz parol yaratildi: {password}')
 
 user, created = User.objects.get_or_create(email=email, defaults={'first_name': 'Admin'})
 user.is_staff = True

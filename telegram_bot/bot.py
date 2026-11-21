@@ -12,11 +12,23 @@ from telebot import types, apihelper
 
 apihelper.ENABLE_MIDDLEWARE = True
 
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "9272714946:AAGViuu8BOATFYuMXHAgFn8fjsiMABRC2g0")
+# Muhit o'zgaruvchilarini yuklash (agar yuklanmagan bo'lsa)
+if not os.environ.get("TELEGRAM_BOT_TOKEN"):
+    try:
+        from pathlib import Path
+        import environ
+        _base_dir = Path(__file__).resolve().parent.parent
+        _env_path = os.path.join(_base_dir, '.env')
+        if os.path.exists(_env_path):
+            environ.Env.read_env(_env_path)
+    except Exception:
+        pass
+
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://sherik-backend.onrender.com/api/v1")
 MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://sherik-frontend.onrender.com")
 
-bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+bot = telebot.TeleBot(BOT_TOKEN or "dummy_token_unconfigured", parse_mode="HTML")
 
 # Shaharlar ro'yxati (ID lar DB ga mos)
 CITIES = [

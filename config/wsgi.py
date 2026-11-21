@@ -24,13 +24,16 @@ try:
 
     from users.models import User
     admin_email = os.environ.get('ADMIN_EMAIL', 'admin@sherik.uz')
-    admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin12345')
+    admin_pass = os.environ.get('ADMIN_PASSWORD')
 
-    user, created = User.objects.get_or_create(email=admin_email, defaults={'first_name': 'Admin'})
-    user.is_staff = True
-    user.is_superuser = True
-    user.set_password(admin_pass)
-    user.save()
-    print(f'>>> Auto-migration muvaffaqiyatli bajarildi! Admin: {admin_email} <<<', file=sys.stdout)
+    if admin_pass:
+        user, created = User.objects.get_or_create(email=admin_email, defaults={'first_name': 'Admin'})
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(admin_pass)
+        user.save()
+        print(f'>>> Auto-migration muvaffaqiyatli bajarildi! Admin: {admin_email} <<<', file=sys.stdout)
+    else:
+        print('>>> Auto-migration muvaffaqiyatli bajarildi! <<<', file=sys.stdout)
 except Exception as e:
     logging.exception('WSGI auto-migration error: %s', e)

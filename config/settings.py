@@ -10,8 +10,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, 'django-insecure-sherik-topish-change-in-production'),
-    ALLOWED_HOSTS=(list, ['*']),
-    CORS_ALLOW_ALL_ORIGINS=(bool, True),
+    ALLOWED_HOSTS=(list, ['sherik-backend.onrender.com', 'localhost', '127.0.0.1', 'testserver']),
+    CORS_ALLOW_ALL_ORIGINS=(bool, False),
     GOOGLE_CLIENT_ID=(str, ''),
     ADMIN_URL=(str, 'admin/'),
 )
@@ -21,10 +21,19 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['sherik-backend.onrender.com', 'localhost', '127.0.0.1', 'testserver']
+)
 CSRF_TRUSTED_ORIGINS = env.list(
     'CSRF_TRUSTED_ORIGINS',
-    default=['https://*.onrender.com', 'http://localhost:3000', 'http://127.0.0.1:3000']
+    default=[
+        'https://sherik-backend.onrender.com',
+        'https://sherik-frontend.onrender.com',
+        'https://*.onrender.com',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]
 )
 
 # Application definition
@@ -145,8 +154,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=[
+        'https://sherik-frontend.onrender.com',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]
+)
+CORS_ALLOW_CREDENTIALS = True
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -164,6 +181,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '120/minute',
+        'user': '300/minute',
+    },
 }
 
 # Simple JWT settings
@@ -217,3 +242,21 @@ LOGGING = {
         },
     },
 }
+
+# Production & General Security Hardening (XSS, Sniffing, Clickjacking, SSL/HSTS)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+
+if not DEBUG:
+    # Render reverse proxy / SSL sozlamalari
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 yil HSTS
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+

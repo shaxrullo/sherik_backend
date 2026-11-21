@@ -4,6 +4,7 @@ import threading
 import time
 import requests
 import telebot
+import os
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -11,6 +12,9 @@ from django.views import View
 from telegram_bot.bot import bot
 
 logger = logging.getLogger(__name__)
+
+# Webhook xavfsizlik maxfiy kaliti
+TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "sherik_secure_bot_token_2026_webhook")
 
 # Render bepul serverini doimo uyg'oq tutish (har 4 daqiqada ping)
 _keep_alive_started = False
@@ -48,6 +52,13 @@ class TelegramWebhookView(View):
     Telegram to'g'ridan-to'g'ri ushbu endpointga xabar va tugma bosilishlarini yuboradi.
     """
     def post(self, request, *args, **kwargs):
+        # Webhook Secret Token tekshiruvi (Telegram yuborgan X-Telegram-Bot-Api-Secret-Token)
+        if TELEGRAM_WEBHOOK_SECRET:
+            token_header = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+            if token_header and token_header != TELEGRAM_WEBHOOK_SECRET:
+                logger.warning("Ruxsat berilmagan webhook so'rovi (secret token mos kelmadi)!")
+                return HttpResponse("Forbidden", status=403)
+
         try:
             body = request.body.decode('utf-8')
             if not body:
@@ -73,6 +84,13 @@ class TelegramWebhookView(View):
     def get(self, request, *args, **kwargs):
         setup = request.GET.get('setup')
         clear_tg = request.GET.get('clear_tg')
+        secret_param = request.GET.get('secret', '')
+
+        # Sozlash yoki o'chirish faqat admin yoki secret bilan
+        if (setup or clear_tg) and not (request.user.is_authenticated and request.user.is_staff):
+            if secret_param != TELEGRAM_WEBHOOK_SECRET:
+                return JsonResponse({"error": "Ruxsat berilmadi: maxfiy kalit (secret) talab qilinadi."}, status=403)
+
         if clear_tg:
             try:
                 from users.models import User
@@ -87,7 +105,10 @@ class TelegramWebhookView(View):
             wh = bot.get_webhook_info()
             if setup or wh.url != target_url:
                 bot.remove_webhook()
-                setup_result = bot.set_webhook(url=target_url, drop_pending_updates=False)
+                kwargs_wh = {"url": target_url, "drop_pending_updates": False}
+                if TELEGRAM_WEBHOOK_SECRET:
+                    kwargs_wh["secret_token"] = TELEGRAM_WEBHOOK_SECRET
+                setup_result = bot.set_webhook(**kwargs_wh)
                 wh = bot.get_webhook_info()
             info = {
                 "url": wh.url,

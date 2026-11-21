@@ -7,14 +7,25 @@ class Command(BaseCommand):
     help = "Telegram Bot uchun Render Webhookni o'rnatish"
 
     def handle(self, *args, **options):
-        token = os.environ.get("TELEGRAM_BOT_TOKEN", "9272714946:AAGViuu8BOATFYuMXHAgFn8fjsiMABRC2g0")
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        secret_token = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "sherik_secure_bot_token_2026_webhook")
         webhook_url = "https://sherik-backend.onrender.com/api/v1/telegram-webhook/"
+
+        if not token:
+            self.stdout.write(self.style.ERROR("❌ TELEGRAM_BOT_TOKEN muhit o'zgaruvchisi topilmadi!"))
+            return
         
         self.stdout.write(f"Webhook o'rnatilmoqda: {webhook_url}")
         try:
             bot = telebot.TeleBot(token)
             bot.remove_webhook()
-            result = bot.set_webhook(url=webhook_url, drop_pending_updates=True)
+            kwargs = {
+                "url": webhook_url,
+                "drop_pending_updates": True,
+            }
+            if secret_token:
+                kwargs["secret_token"] = secret_token
+            result = bot.set_webhook(**kwargs)
             if result:
                 self.stdout.write(self.style.SUCCESS(f"✅ Webhook muvaffaqiyatli o'rnatildi: {webhook_url}"))
             else:
