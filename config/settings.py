@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, 'django-insecure-sherik-topish-change-in-production'),
-    ALLOWED_HOSTS=(list, ['sherik-backend.onrender.com', 'localhost', '127.0.0.1', 'testserver']),
+    ALLOWED_HOSTS=(list, ['.onrender.com', 'localhost', '127.0.0.1', '[::1]', '*']),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     GOOGLE_CLIENT_ID=(str, ''),
     ADMIN_URL=(str, 'admin/'),
@@ -23,7 +23,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list(
     'ALLOWED_HOSTS',
-    default=['sherik-backend.onrender.com', 'localhost', '127.0.0.1', 'testserver']
+    default=['.onrender.com', 'localhost', '127.0.0.1', '[::1]', '*']
 )
 CSRF_TRUSTED_ORIGINS = env.list(
     'CSRF_TRUSTED_ORIGINS',
@@ -251,9 +251,9 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 
 if not DEBUG:
-    # Render reverse proxy / SSL sozlamalari
+    # Render reverse proxy / SSL sozlamalari (Render SSL ni Cloudflare darajasida ta'minlaydi)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)
+    SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000  # 1 yil HSTS
