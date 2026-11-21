@@ -24,11 +24,16 @@ if not os.environ.get("TELEGRAM_BOT_TOKEN"):
     except Exception:
         pass
 
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+if not BOT_TOKEN or ":" not in BOT_TOKEN:
+    import logging
+    logging.getLogger(__name__).warning("TELEGRAM_BOT_TOKEN muhit o'zgaruvchisi topilmadi yoki yaroqsiz formatda.")
+    BOT_TOKEN = "0000000000:dummy_unconfigured_token"
+
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://sherik-backend.onrender.com/api/v1")
 MINI_APP_URL = os.environ.get("MINI_APP_URL", "https://sherik-frontend.onrender.com")
 
-bot = telebot.TeleBot(BOT_TOKEN or "dummy_token_unconfigured", parse_mode="HTML")
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # Shaharlar ro'yxati (ID lar DB ga mos)
 CITIES = [

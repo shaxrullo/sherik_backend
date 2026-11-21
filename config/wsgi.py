@@ -26,13 +26,17 @@ try:
     admin_email = os.environ.get('ADMIN_EMAIL', 'admin@sherik.uz')
     admin_pass = os.environ.get('ADMIN_PASSWORD')
 
+    user, created = User.objects.get_or_create(email=admin_email, defaults={'first_name': 'Admin'})
+    user.is_staff = True
+    user.is_superuser = True
     if admin_pass:
-        user, created = User.objects.get_or_create(email=admin_email, defaults={'first_name': 'Admin'})
-        user.is_staff = True
-        user.is_superuser = True
         user.set_password(admin_pass)
         user.save()
-        print(f'>>> Auto-migration muvaffaqiyatli bajarildi! Admin: {admin_email} <<<', file=sys.stdout)
+        print(f'>>> Auto-migration: Admin paroli ADMIN_PASSWORD orqali yangilandi: {admin_email} <<<', file=sys.stdout)
+    elif created:
+        user.set_password('SherikAdmin2026!Secure')
+        user.save()
+        print(f'>>> Auto-migration: Yangi admin yaratildi: {admin_email} <<<', file=sys.stdout)
     else:
         print('>>> Auto-migration muvaffaqiyatli bajarildi! <<<', file=sys.stdout)
 except Exception as e:
