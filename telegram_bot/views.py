@@ -23,6 +23,9 @@ class TelegramWebhookView(View):
                 return HttpResponse(status=200)
             update = telebot.types.Update.de_json(body)
             if update:
+                # Agar buyruq kelsa (/start, /restart, /new), eski qadamlarni tozalash
+                if update.message and update.message.text and update.message.text.startswith('/'):
+                    bot.clear_step_handler_by_chat_id(update.message.chat.id)
                 bot.process_new_updates([update])
         except Exception as e:
             logger.error(f"Telegram webhook xatosi: {e}")
@@ -30,6 +33,13 @@ class TelegramWebhookView(View):
 
     def get(self, request, *args, **kwargs):
         setup = request.GET.get('setup')
+        clear_tg = request.GET.get('clear_tg')
+        if clear_tg:
+            try:
+                from users.models import User
+                User.objects.filter(email=f"tg_{clear_tg}@sherik.uz").update(phone_number='')
+            except Exception:
+                pass
         info = None
         setup_result = None
         target_url = "https://sherik-backend.onrender.com/api/v1/telegram-webhook/"

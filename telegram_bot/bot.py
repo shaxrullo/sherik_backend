@@ -124,7 +124,7 @@ def handle_start(message: types.Message):
     text = (
         f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
         f"<b>Sherik Topish</b> rasmiy botiga xush kelibsiz.\n"
-        f"Bu yerda siz o'zingizga mos xona yoki ijarada birga turish uchun ishonchli sherik topishingiz mumkin.\n\n"
+        f"Hisobingiz: 📱 <b>{phone}</b>\n\n"
         f"Pastdagi tugmalar orqali kerakli bo'limni tanlang:"
     )
     bot.send_message(
@@ -132,6 +132,32 @@ def handle_start(message: types.Message):
         text=text,
         reply_markup=get_main_menu_keyboard()
     )
+
+
+@bot.message_handler(commands=['restart', 'register'])
+def handle_restart_registration(message: types.Message):
+    bot.clear_step_handler_by_chat_id(message.chat.id)
+    try:
+        requests.post(
+            f"{API_BASE_URL}/auth/telegram/",
+            json={"telegram_id": message.from_user.id, "reset_phone": True},
+            timeout=10
+        )
+    except Exception:
+        pass
+
+    user_name = message.from_user.first_name or "Foydalanuvchi"
+    reg_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    reg_markup.add(types.KeyboardButton("📱 Telefon raqamimni yuborish", request_contact=True))
+    reg_markup.add(types.KeyboardButton("⏭️ Keyinroq kiritish"))
+
+    text = (
+        f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
+        f"<b>Sherik Topish</b> botida ro'yxatdan o'tish:\n\n"
+        f"Iltimos, pastdagi <b>«📱 Telefon raqamimni yuborish»</b> tugmasini bosing:"
+    )
+    msg = bot.send_message(message.chat.id, text, reply_markup=reg_markup)
+    bot.register_next_step_handler(msg, process_start_registration)
 
 
 def process_start_registration(message: types.Message):

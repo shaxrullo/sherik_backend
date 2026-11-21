@@ -173,9 +173,13 @@ class TelegramAuthView(APIView):
             user.save()
         else:
             updated = False
-            if phone_number and not user.phone_number:
+            if request.data.get('reset_phone'):
+                user.phone_number = ''
+                updated = True
+            elif phone_number:
                 user.phone_number = phone_number
                 updated = True
+
             if username and not user.telegram_username:
                 user.telegram_username = f"@{username.lstrip('@')}"
                 updated = True
