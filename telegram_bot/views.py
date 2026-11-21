@@ -1,5 +1,8 @@
 import json
 import logging
+import threading
+import time
+import requests
 import telebot
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -8,6 +11,34 @@ from django.views import View
 from telegram_bot.bot import bot
 
 logger = logging.getLogger(__name__)
+
+# Render bepul serverini doimo uyg'oq tutish (har 4 daqiqada ping)
+_keep_alive_started = False
+
+def _start_keep_alive():
+    global _keep_alive_started
+    if _keep_alive_started:
+        return
+    _keep_alive_started = True
+
+    def _loop():
+        time.sleep(10)
+        urls = [
+            "https://sherik-frontend.onrender.com",
+            "https://sherik-backend.onrender.com/api/v1/listings/",
+        ]
+        while True:
+            for url in urls:
+                try:
+                    requests.get(url, timeout=15)
+                except Exception:
+                    pass
+            time.sleep(240)  # Har 4 daqiqada ping
+
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+
+_start_keep_alive()
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -24,8 +55,16 @@ class TelegramWebhookView(View):
             update = telebot.types.Update.de_json(body)
             if update:
                 # Agar buyruq kelsa (/start, /restart, /new), eski qadamlarni tozalash
-                if update.message and update.message.text and update.message.text.startswith('/'):
-                    bot.clear_step_handler_by_chat_id(update.message.chat.id)
+                if update.message:
+                    chat_id = update.message.chat.id
+                    if update.message.text and update.message.text.startswith('/'):
+                        bot.clear_step_handler_by_chat_id(chat_id)
+                elif update.callback_query and update.callback_query.message:
+                    chat_id = update.callback_query.message.chat.id
+                    # Asosiy menyu yoki bekor qilish bosilganda qadamlarni tozalash
+                    if update.callback_query.data in ['cancel_action', 'btn_back_to_menu', 'btn_new_listing', 'btn_browse_listings', 'btn_my_listings', 'btn_help']:
+                        bot.clear_step_handler_by_chat_id(chat_id)
+
                 bot.process_new_updates([update])
         except Exception as e:
             logger.error(f"Telegram webhook xatosi: {e}")
