@@ -29,8 +29,31 @@ class TelegramWebhookView(View):
         return HttpResponse(status=200)
 
     def get(self, request, *args, **kwargs):
+        setup = request.GET.get('setup')
+        info = None
+        setup_result = None
+        target_url = "https://sherik-backend.onrender.com/api/v1/telegram-webhook/"
+
+        try:
+            wh = bot.get_webhook_info()
+            if setup or wh.url != target_url:
+                bot.remove_webhook()
+                setup_result = bot.set_webhook(url=target_url, drop_pending_updates=False)
+                wh = bot.get_webhook_info()
+            info = {
+                "url": wh.url,
+                "has_custom_certificate": wh.has_custom_certificate,
+                "pending_update_count": wh.pending_update_count,
+                "last_error_date": wh.last_error_date,
+                "last_error_message": wh.last_error_message,
+            }
+        except Exception as e:
+            info = f"Error: {e}"
+
         return JsonResponse({
             "status": "active",
             "bot": "@SheriktopishBot",
-            "message": "Telegram webhook jonli ishlamoqda"
+            "setup_result": setup_result,
+            "webhook_info": info
         })
+
