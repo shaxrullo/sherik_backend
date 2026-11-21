@@ -15,3 +15,4 @@ class Command(BaseCommand):
             bot.infinity_polling(skip_pending=True)
         except (KeyboardInterrupt, SystemExit):
             self.stdout.write(self.style.WARNING("Bot to'xtatildi."))
+

@@ -89,3 +89,4 @@ for city_name, districts in CITIES_DATA.items():
 
 print(f">>> Shaharlar: {created_cities} ta yangi, {created_districts} ta tuman qo'shildi.")
 print(f">>> Jami DB da: {City.objects.count()} shahar, {District.objects.count()} tuman.")
+

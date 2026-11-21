@@ -8,7 +8,9 @@ import threading
 import time
 import requests
 import telebot
-from telebot import types
+from telebot import types, apihelper
+
+apihelper.ENABLE_MIDDLEWARE = True
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "9272714946:AAGViuu8BOATFYuMXHAgFn8fjsiMABRC2g0")
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://sherik-backend.onrender.com/api/v1")
@@ -40,8 +42,13 @@ def _keep_alive_loop():
         time.sleep(300) # 5 daqiqa
 
 
-threading.Thread(target=_keep_alive_loop, daemon=True).start()
-
+@bot.middleware_handler(update_types=['callback_query'])
+def auto_answer_callback(bot_instance, call):
+    """Barcha tugma bosilishlarini darhol tasdiqlash (aylanib qolmasligi uchun)."""
+    try:
+        bot_instance.answer_callback_query(call.id)
+    except Exception:
+        pass
 
 
 def get_main_menu_keyboard():
@@ -1210,6 +1217,7 @@ def handle_help_callback(call: types.CallbackQuery):
 
 
 if __name__ == "__main__":
+    threading.Thread(target=_keep_alive_loop, daemon=True).start()
     print("🤖 @SheriktopishBot ishga tushmoqda...")
     bot.infinity_polling(skip_pending=True)
 

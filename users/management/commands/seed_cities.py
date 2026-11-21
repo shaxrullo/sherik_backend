@@ -92,3 +92,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"\n✅ Tayyor! Yangi: {created_cities} shahar, {created_districts} tuman qo'shildi."
         ))
+

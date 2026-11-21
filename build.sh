@@ -7,3 +7,4 @@ python manage.py collectstatic --no-input
 python manage.py migrate
 python init_admin.py
 python init_cities.py
+python manage.py set_webhook

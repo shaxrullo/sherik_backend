@@ -27,3 +27,4 @@ if __name__ == "__main__":
     while True:
         ping_servers()
         time.sleep(480) # 8 daqiqa (Render 15 daqiqada uxlaydi)
+

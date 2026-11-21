@@ -86,3 +86,4 @@ class SupabaseStorage(Storage):
     def url(self, name):
         clean_name = self._normalize_name(name)
         return f"{self.base_url}/storage/v1/object/public/{self.bucket}/{clean_name}"
+

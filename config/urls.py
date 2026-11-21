@@ -68,6 +68,11 @@ urlpatterns = [
     path('api/v1/favorites/', include('favorites.urls')),
     path('api/v1/reports/', include('reports.urls')),
     path('api/v1/matching/', include('matching.urls')),
+
+    # Telegram Bot Webhook
+    path('api/v1/telegram-webhook/', include([
+        path('', __import__('telegram_bot.views', fromlist=['TelegramWebhookView']).TelegramWebhookView.as_view(), name='telegram-webhook'),
+    ])),
 ]
 
 if settings.DEBUG:
