@@ -138,7 +138,7 @@ def handle_browse_listings(update):
 
                 item_markup = types.InlineKeyboardMarkup()
                 item_markup.add(types.InlineKeyboardButton(
-                    text="🌐 Saytda ko'rish",
+                    text="📱 Ilovada ko'rish",
                     web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/listings/{item.get('id')}")
                 ))
 
@@ -353,6 +353,14 @@ def handle_skip_photo(call: types.CallbackQuery):
     ask_phone_step(call.message.chat.id)
 
 
+def safe_delete_message(chat_id, message_id):
+    """Xabarni xavfsiz o'chirish (agar o'chirib bo'lmasa xatolik bermaydi)."""
+    try:
+        bot.delete_message(chat_id, message_id)
+    except Exception:
+        pass
+
+
 def ask_phone_step(chat_id):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(types.KeyboardButton("📱 Telefon raqamimni ulashish", request_contact=True))
@@ -403,9 +411,9 @@ def process_phone_and_finish(message: types.Message):
         auth_resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=15)
 
         if auth_resp.status_code != 200:
-            bot.edit_message_text(
+            safe_delete_message(message.chat.id, wait_msg.message_id)
+            bot.send_message(
                 chat_id=message.chat.id,
-                message_id=wait_msg.message_id,
                 text=f"❌ Autentifikatsiya xatosi: {auth_resp.text}",
                 reply_markup=get_main_menu_keyboard()
             )
@@ -427,9 +435,9 @@ def process_phone_and_finish(message: types.Message):
         create_resp = requests.post(f"{API_BASE_URL}/listings/", json=listing_payload, headers=headers, timeout=15)
 
         if create_resp.status_code not in [200, 201]:
-            bot.edit_message_text(
+            safe_delete_message(message.chat.id, wait_msg.message_id)
+            bot.send_message(
                 chat_id=message.chat.id,
-                message_id=wait_msg.message_id,
                 text=f"❌ E'lon yaratishda xato: {create_resp.text}",
                 reply_markup=get_main_menu_keyboard()
             )
@@ -470,22 +478,22 @@ def process_phone_and_finish(message: types.Message):
 
         fin_markup = types.InlineKeyboardMarkup()
         fin_markup.add(types.InlineKeyboardButton(
-            text="🌐 Saytda ko'rish",
+            text="📱 Ilovada ko'rish",
             web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/listings/{listing_id}")
         ))
         fin_markup.add(types.InlineKeyboardButton(text="🏠 Bosh menyu", callback_data="btn_back_to_menu"))
 
-        bot.edit_message_text(
+        safe_delete_message(message.chat.id, wait_msg.message_id)
+        bot.send_message(
             chat_id=message.chat.id,
-            message_id=wait_msg.message_id,
             text=success_text,
             reply_markup=fin_markup
         )
 
     except Exception as e:
-        bot.edit_message_text(
+        safe_delete_message(message.chat.id, wait_msg.message_id)
+        bot.send_message(
             chat_id=message.chat.id,
-            message_id=wait_msg.message_id,
             text=f"❌ Tizim xatosi yuz berdi: {e}",
             reply_markup=get_main_menu_keyboard()
         )
