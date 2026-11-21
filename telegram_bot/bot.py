@@ -29,15 +29,15 @@ user_drafts = {}
 
 
 def _keep_alive_loop():
-    """Render bepul tarifida sayt va backend uxlab qolmasligi uchun fon rejimida har 8 daqiqada ping yuboradi."""
-    time.sleep(5)
+    """Render bepul tarifida sayt va backend uxlab qolmasligi uchun fon rejimida har 5 daqiqada ping yuboradi."""
+    time.sleep(3)
     while True:
         for url in [MINI_APP_URL, f"{API_BASE_URL}/listings/"]:
             try:
-                requests.get(url, timeout=12)
+                requests.get(url, timeout=15)
             except Exception:
                 pass
-        time.sleep(480) # 8 daqiqa
+        time.sleep(300) # 5 daqiqa
 
 
 threading.Thread(target=_keep_alive_loop, daemon=True).start()
@@ -47,7 +47,7 @@ threading.Thread(target=_keep_alive_loop, daemon=True).start()
 def get_main_menu_keyboard():
     markup = types.InlineKeyboardMarkup(row_width=2)
     btn_webapp = types.InlineKeyboardButton(
-        text="🏠 Saytni ochish (Mini App)",
+        text="📱 Ilova",
         web_app=types.WebAppInfo(url=MINI_APP_URL)
     )
     btn_new = types.InlineKeyboardButton(text="📋 E'lon joylash", callback_data="btn_new_listing")
@@ -81,7 +81,7 @@ def handle_start(message: types.Message):
 def handle_help(message: types.Message):
     text = (
         "ℹ️ <b>Sherik Bot bo'yicha ko'rsatmalar:</b>\n\n"
-        "• <b>🏠 Saytni ochish</b> — Saytni to'g'ridan-to'g'ri Telegram ichida ochadi.\n"
+        "• <b>📱 Ilova</b> — Ilovani to'g'ridan-to'g'ri Telegram ichida ochadi.\n"
         "• <b>📋 E'lon joylash</b> — Bot orqali tezda e'lon joylashtirish.\n"
         "• <b>🔍 E'lonlar</b> — Barcha tasdiqlangan e'lonlarni ko'rish.\n\n"
         "Buyruqlar:\n"
@@ -565,7 +565,7 @@ def handle_cancel(call: types.CallbackQuery):
 def handle_help_callback(call: types.CallbackQuery):
     text = (
         "ℹ️ <b>Sherik Bot bo'yicha ko'rsatmalar:</b>\n\n"
-        "• <b>🏠 Saytni ochish</b> — Saytni to'liq holda Telegram ichida ochadi.\n"
+        "• <b>📱 Ilova</b> — Ilovani to'liq holda Telegram ichida ochadi.\n"
         "• <b>📋 E'lon joylash</b> — Saytga kirmasdan bot orqali e'lon joylaysiz.\n"
         "• <b>🔍 E'lonlar</b> — Barcha tasdiqlangan e'lonlarni ko'rish.\n\n"
         "Savol va takliflar bo'yicha: @sherik_support"
