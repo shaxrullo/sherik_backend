@@ -57,11 +57,21 @@ class Listing(models.Model):
         blank=True,
         verbose_name="Aniq manzil yoki mo'ljal",
     )
+    class Currency(models.TextChoices):
+        USD = 'USD', "USD ($)"
+        UZS = 'UZS', "UZS (so'm)"
+
     price = models.DecimalField(
         max_digits=12,
         decimal_places=0,
-        verbose_name="Oylik narx (so'mda)",
-        help_text="So'mda, masalan 1500000",
+        verbose_name="Oylik narx",
+        help_text="Masalan 100 yoki 1500000",
+    )
+    currency = models.CharField(
+        max_length=5,
+        choices=Currency.choices,
+        default=Currency.USD,
+        verbose_name="Valyuta",
     )
     capacity = models.PositiveSmallIntegerField(
         default=1,
