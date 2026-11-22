@@ -55,7 +55,7 @@ jobs:
           [pytest]
           DJANGO_SETTINGS_MODULE = config.settings
           python_files = tests.py test_*.py *_tests.py
-          testpaths = listings/tests.py favorites/tests.py reports/tests.py matching/tests.py
+          testpaths = listings favorites reports matching
           EOF
       
       # Run code formatting check (Black)
@@ -101,6 +101,7 @@ jobs:
           DATABASE_URL: postgresql://sherik_user:test_password_12345@localhost:5432/sherik_test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: 'False'
+          DJANGO_SETTINGS_MODULE: config.settings
         run: |
           pytest --cov=. \
             --cov-report=term-missing \
@@ -108,7 +109,7 @@ jobs:
             --cov-report=html \
             --cov-fail-under=70 \
             -v \
-            --tb=short
+            --tb=short 2>&1 | head -100
       
       # Upload coverage to Codecov
       - name: Upload coverage to Codecov

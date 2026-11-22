@@ -45,7 +45,7 @@ jobs:
           [pytest]
           DJANGO_SETTINGS_MODULE = config.settings
           python_files = tests.py test_*.py *_tests.py
-          testpaths = listings/tests.py favorites/tests.py reports/tests.py matching/tests.py
+          testpaths = listings favorites reports matching
           EOF
       
       - name: Run database migrations
