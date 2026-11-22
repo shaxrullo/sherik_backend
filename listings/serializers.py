@@ -204,6 +204,20 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
             'price': {'error_messages': {'invalid': "Narx noto'g'ri kiritildi."}},
         }
 
+    def to_internal_value(self, data):
+        # Narx float yoki kasr bilan kelganda (masalan 100.0 yoki "100.00"), uni decimal_places=0 ga mos butun songa aylantirish
+        if hasattr(data, '_mutable'):
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = data.copy()
+        if 'price' in data and data['price'] is not None:
+            try:
+                float_val = float(str(data['price']).replace(',', '.'))
+                data['price'] = int(round(float_val))
+            except (ValueError, TypeError):
+                pass
+        return super().to_internal_value(data)
+
     def validate_price(self, value):
         if value <= 0:
             raise serializers.ValidationError("Oylik narx 0 dan katta bo'lishi kerak.")

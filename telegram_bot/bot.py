@@ -696,7 +696,7 @@ def process_price_step(message: types.Message):
     # Tozalash
     cleaned = text.replace("$", "").replace(" ", "").replace(",", "").replace("so'm", "").replace("som", "")
     try:
-        price = float(cleaned)
+        price = int(round(float(cleaned)))
         if price <= 0:
             raise ValueError
     except ValueError:
@@ -1597,7 +1597,7 @@ def handle_confirm_save(call: types.CallbackQuery):
             "description": draft.get("description", "Kvartiraga sherik kerak"),
             "listing_type": draft.get("listing_type", "have_room"),
             "city_id": draft.get("city_id", 1),
-            "price": draft.get("price", 100),
+            "price": int(round(float(draft.get("price", 100)))),
             "currency": draft.get("currency", "USD"),
             "capacity": draft.get("capacity", 1),
             "total_residents": draft.get("total_residents", 2),
