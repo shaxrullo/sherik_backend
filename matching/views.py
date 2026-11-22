@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 
 from listings.models import Listing
 from listings.pagination import StandardResultsSetPagination
-from .services import calculate_match_score
+from matching.services_cached import CachedMatchingService
 from .serializers import MatchedListingSerializer, ListingMatchDetailSerializer
 
 
@@ -36,6 +36,12 @@ from .serializers import MatchedListingSerializer, ListingMatchDetailSerializer
             description="Sahifadagi natijalar soni",
             required=False,
         ),
+        OpenApiParameter(
+            name='refresh',
+            type=bool,
+            description="Cache'ni bypass qilib yangi hisoblash (default: false)",
+            required=False,
+        ),
     ],
     responses={
         200: MatchedListingSerializer(many=True),
@@ -43,43 +49,35 @@ from .serializers import MatchedListingSerializer, ListingMatchDetailSerializer
     }
 )
 class MatchingRecommendationsView(APIView):
-    """Foydalanuvchiga mos e'lonlarni tavsiya qilish viewsi."""
+    """Foydalanuvchiga mos e'lonlarni tavsiya qilish viewsi (cached)."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
         min_score = int(request.query_params.get('min_score', 0))
-
-        # Faqat boshqa foydalanuvchilarning faol va tasdiqlangan e'lonlari
-        queryset = (
-            Listing.objects.filter(
-                status=Listing.Status.ACTIVE,
-                moderation_status=Listing.ModerationStatus.APPROVED,
-                author__is_active=True,
-            )
-            .exclude(author=user)
-            .select_related('author', 'author__lifestyle', 'city', 'district')
-            .prefetch_related('photos')
+        force_refresh = request.query_params.get('refresh', '').lower() == 'true'
+        
+        # Get cached recommendations
+        recommended_data = CachedMatchingService.get_recommendations_for_user(
+            user,
+            limit=100,  # Get top 100, then filter by min_score
+            force_refresh=force_refresh
         )
-
-        matched_results = []
-        for listing in queryset:
-            match_data = calculate_match_score(user, listing)
-            score = match_data['total_score']
-
-            if score >= min_score:
-                matched_results.append({
-                    'listing': listing,
-                    'match_score': score,
-                    'match_breakdown': match_data['breakdown'],
-                    'match_details': match_data['details'],
-                })
-
-        # Moslik foizi bo'yicha eng yuqorisidan kamayish tartibida saralash
-        matched_results.sort(key=lambda x: x['match_score'], reverse=True)
-
-        # Sahifalash
+        
+        # Filter by minimum score
+        matched_results = [
+            {
+                'listing': item['listing'],
+                'match_score': item['score']['total_score'],
+                'match_breakdown': item['score']['breakdown'],
+                'match_details': item['score']['details'],
+            }
+            for item in recommended_data
+            if item['score']['total_score'] >= min_score
+        ]
+        
+        # Pagination
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(matched_results, request, view=self)
 
@@ -91,13 +89,21 @@ class MatchingRecommendationsView(APIView):
     tags=['Matching'],
     summary="Bitta e'lon bilan moslik tahlili",
     description="Aniq bir e'lonning joriy foydalanuvchiga moslik foizini va sabablarini qaytaradi.",
+    parameters=[
+        OpenApiParameter(
+            name='refresh',
+            type=bool,
+            description="Cache'ni bypass qilib yangi hisoblash (default: false)",
+            required=False,
+        ),
+    ],
     responses={
         200: ListingMatchDetailSerializer,
         404: OpenApiResponse(description="E'lon topilmadi"),
     }
 )
 class ListingMatchCheckView(APIView):
-    """Aniq bitta e'lon bilan moslikni tekshirish viewsi."""
+    """Aniq bitta e'lon bilan moslikni tekshirish viewsi (cached)."""
 
     permission_classes = [permissions.IsAuthenticated]
 
@@ -114,7 +120,13 @@ class ListingMatchCheckView(APIView):
         except Listing.DoesNotExist:
             raise NotFound("Bunday faol e'lon topilmadi.")
 
-        match_data = calculate_match_score(request.user, listing)
+        force_refresh = request.query_params.get('refresh', '').lower() == 'true'
+        match_data = CachedMatchingService.get_match_score(
+            request.user,
+            listing,
+            force_refresh=force_refresh
+        )
+        
         response_data = {
             'listing_id': listing.id,
             'listing_title': listing.title,

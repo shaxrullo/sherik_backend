@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
+import logging
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -181,6 +182,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_EXCEPTION_HANDLER': 'config.exceptions.custom_exception_handler',
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -215,6 +217,51 @@ GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 ADMIN_URL = env('ADMIN_URL', default='admin/').strip('/') + '/'
 LOGIN_REDIRECT_URL = '/' + ADMIN_URL
 LOGOUT_REDIRECT_URL = '/' + ADMIN_URL
+
+# Cache Configuration - Redis for production, local memory for development
+REDIS_URL = env('REDIS_URL', default='redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache' if not DEBUG else 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': REDIS_URL if not DEBUG else 'unique-snowflake',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,  # Don't raise exceptions if cache is unavailable
+            'CONNECTION_POOL_KWARGS': {'max_connections': 50}
+        } if not DEBUG else {},
+        'KEY_PREFIX': 'sherik_backend',
+        'TIMEOUT': 300  # 5 minutes default timeout
+    }
+}
+
+# Sentry Configuration - Error tracking for production
+SENTRY_DSN = env('SENTRY_DSN', default='')
+
+if SENTRY_DSN and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+    
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            RedisIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR)
+        ],
+        traces_sample_rate=0.1,  # Sample 10% of transactions
+        environment=env('ENVIRONMENT', default='production'),
+        # Ignore certain exceptions that are not critical
+        ignore_errors=[
+            'rest_framework.exceptions.NotFound',
+            'rest_framework.exceptions.ValidationError',
+        ]
+    )
 
 # Logging configuration (Render va server konsoliga to'liq xatoliklarni chiqarish)
 LOGGING = {

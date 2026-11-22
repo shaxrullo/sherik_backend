@@ -1,0 +1,15 @@
+[bandit]
+# Exclude files/patterns
+exclude_dirs = [
+    '/tests',
+    '/test',
+    '/.venv',
+    '/venv',
+    '/migrations',
+]
+
+# Skips
+skips = []
+
+# Tests to run (can be used to include/exclude specific tests)
+tests = []

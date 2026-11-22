@@ -9,6 +9,8 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from config.health import health_check, readiness_check, liveness_check
+from config.monitoring import monitoring_status, test_sentry
 
 from users.views_admin import AdminStatsView
 
@@ -50,6 +52,15 @@ admin.site.site_title = "Sherik Topish Admin"
 admin.site.index_title = "Boshqaruv Paneli va Jonli Ko'rsatkichlar"
 
 urlpatterns = [
+    # Health Check Endpoints (for monitoring/load balancers)
+    path('health/', health_check, name='health'),
+    path('ready/', readiness_check, name='readiness'),
+    path('alive/', liveness_check, name='liveness'),
+    
+    # Monitoring Endpoints
+    path('monitoring/status/', monitoring_status, name='monitoring_status'),
+    path('monitoring/sentry-test/', test_sentry, name='test_sentry'),
+
     # Himoyalangan maxsus Admin panel manzili (.env orqali boshqariladi)
     path(settings.ADMIN_URL, admin.site.urls),
 

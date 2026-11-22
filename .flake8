@@ -1,0 +1,26 @@
+[flake8]
+max-line-length = 100
+exclude = 
+    .git,
+    __pycache__,
+    migrations,
+    .venv,
+    venv,
+    build,
+    dist,
+    .egg-info
+
+ignore = 
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    E501,  # line too long (handled by Black)
+    F401,  # module imported but unused (useful for __init__.py)
+
+per-file-ignores =
+    __init__.py:F401
+    models.py:F401
+    settings.py:F401,E402
+
+max-complexity = 10
+count = True
+statistics = True
