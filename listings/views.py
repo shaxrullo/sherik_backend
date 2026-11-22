@@ -29,7 +29,14 @@ class ListingListCreateView(generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ListingFilter
-    search_fields = ['title', 'description', 'address_line']
+    search_fields = [
+        'title',
+        'description',
+        'address_line',
+        'city__name',
+        'district__name',
+        'near_subway',
+    ]
     ordering_fields = ['price', 'created_at']
     ordering = ['-created_at']
 

@@ -21,3 +21,4 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(delete_test_listings, migrations.RunPython.noop),
     ]
+
