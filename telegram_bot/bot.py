@@ -939,7 +939,7 @@ def render_step_7_amenities(chat_id, user_id, message_id=None):
     bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_am_"))
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_am_") and call.data != "wiz_amenities_done")
 def handle_amenity_toggle(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id not in user_drafts:
