@@ -1090,7 +1090,16 @@ def render_step_8_metro(chat_id, user_id, message_id=None):
     bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_metro_"))
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_metro_done")
+def handle_metro_done(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id in user_drafts:
+        selected = user_drafts[user_id].get("selected_metros", [])
+        user_drafts[user_id]["near_subway"] = ", ".join(selected)
+    render_step_9_universities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_metro_") and call.data != "wiz_metro_done")
 def handle_metro_toggle(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id not in user_drafts:
@@ -1107,15 +1116,6 @@ def handle_metro_toggle(call: types.CallbackQuery):
         user_drafts[user_id]["near_subway"] = ", ".join(selected)
 
     render_step_8_metro(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
-
-
-@bot.callback_query_handler(func=lambda call: call.data == "wiz_metro_done")
-def handle_metro_done(call: types.CallbackQuery):
-    user_id = call.from_user.id
-    if user_id in user_drafts:
-        selected = user_drafts[user_id].get("selected_metros", [])
-        user_drafts[user_id]["near_subway"] = ", ".join(selected)
-    render_step_9_universities(call.message.chat.id, user_id=user_id, message_id=call.message.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_skip_metro")
@@ -1216,7 +1216,13 @@ def render_step_9_universities(chat_id, user_id, message_id=None):
     bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_uni_"))
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_unis_done")
+def handle_unis_done(call: types.CallbackQuery):
+    render_step_10_photo(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_uni_") and call.data != "wiz_unis_done")
 def handle_uni_toggle(call: types.CallbackQuery):
     user_id = call.from_user.id
     if user_id not in user_drafts:
@@ -1279,10 +1285,6 @@ def handle_back_to_unis(call: types.CallbackQuery):
     bot.clear_step_handler_by_chat_id(call.message.chat.id)
     render_step_9_universities(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
-
-@bot.callback_query_handler(func=lambda call: call.data == "wiz_unis_done")
-def handle_unis_done(call: types.CallbackQuery):
-    render_step_10_photo(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
 # ==================== 10-BOSQICH: RASMLAR ====================
