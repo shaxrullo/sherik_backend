@@ -24,6 +24,11 @@ class Favorite(models.Model):
         verbose_name_plural = "Sevimli e'lonlar"
         unique_together = ('user', 'listing')
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user_id'], name='favorite_user_idx'),
+            models.Index(fields=['listing_id'], name='favorite_listing_idx'),
+            models.Index(fields=['created_at'], name='favorite_created_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user.email} -> {self.listing.title}"

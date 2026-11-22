@@ -228,9 +228,8 @@ class ListingCreateUpdateSerializer(serializers.ModelSerializer):
         from django.utils import timezone
         user = self.context['request'].user
         validated_data['author'] = user
-        if getattr(user, 'is_verified', False) or getattr(user, 'is_staff', False):
-            validated_data['moderation_status'] = Listing.ModerationStatus.APPROVED
-            validated_data['moderated_at'] = timezone.now()
+        validated_data['moderation_status'] = Listing.ModerationStatus.APPROVED
+        validated_data['moderated_at'] = timezone.now()
         return super().create(validated_data)
 
 

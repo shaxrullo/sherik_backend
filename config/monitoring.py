@@ -4,7 +4,10 @@ Monitoring and observability utilities for the application.
 Integrates with Sentry for error tracking and provides monitoring endpoints.
 """
 
-import sentry_sdk
+try:
+    import sentry_sdk
+except ImportError:
+    sentry_sdk = None
 import logging
 from django.conf import settings
 from rest_framework.response import Response
@@ -25,7 +28,7 @@ def capture_exception(exc, level='error', tags=None, extra=None):
         tags: Dict of tags to add to the event
         extra: Dict of extra data to include
     """
-    if settings.SENTRY_DSN and not settings.DEBUG:
+    if sentry_sdk and settings.SENTRY_DSN and not settings.DEBUG:
         try:
             with sentry_sdk.push_scope() as scope:
                 if tags:
@@ -54,7 +57,7 @@ def capture_message(message, level='info', tags=None, extra=None):
         tags: Dict of tags
         extra: Dict of extra data
     """
-    if settings.SENTRY_DSN and not settings.DEBUG:
+    if sentry_sdk and settings.SENTRY_DSN and not settings.DEBUG:
         try:
             with sentry_sdk.push_scope() as scope:
                 if tags:
@@ -166,7 +169,7 @@ class MonitoringContextManager:
         self.scope = None
     
     def __enter__(self):
-        if settings.SENTRY_DSN and not settings.DEBUG:
+        if sentry_sdk and settings.SENTRY_DSN and not settings.DEBUG:
             self.scope = sentry_sdk.push_scope()
             self.scope.__enter__()
             
@@ -186,7 +189,7 @@ class MonitoringContextManager:
             self.scope.__exit__(exc_type, exc_val, exc_tb)
         
         # Capture exception if one occurred
-        if exc_type is not None and settings.SENTRY_DSN and not settings.DEBUG:
+        if sentry_sdk and exc_type is not None and settings.SENTRY_DSN and not settings.DEBUG:
             sentry_sdk.capture_exception((exc_type, exc_val, exc_tb))
         
         return False  # Don't suppress the exception

@@ -116,11 +116,11 @@ class Listing(models.Model):
         verbose_name="E'lon holati",
     )
 
-    # Moderatsiya qismi
+    # Moderatsiya qismi (Default: Darhol tasdiqlanadi - Approved)
     moderation_status = models.CharField(
         max_length=20,
         choices=ModerationStatus.choices,
-        default=ModerationStatus.PENDING,
+        default=ModerationStatus.APPROVED,
         verbose_name="Moderatsiya holati",
     )
     rejection_reason = models.TextField(
@@ -148,19 +148,25 @@ class Listing(models.Model):
         verbose_name = "E'lon"
         verbose_name_plural = "E'lonlar"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['created_at'], name='listings_created_idx'),
+            models.Index(fields=['status'], name='listings_status_idx'),
+            models.Index(fields=['moderation_status'], name='listings_mod_status_idx'),
+            models.Index(fields=['author_id'], name='listings_author_idx'),
+            models.Index(fields=['city_id'], name='listings_city_idx'),
+            models.Index(fields=['district_id'], name='listings_district_idx'),
+            models.Index(fields=['listing_type'], name='listings_type_idx'),
+            models.Index(fields=['status', 'moderation_status'], name='listings_status_mod_idx'),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.get_listing_type_display()}) - {self.city.name}"
 
     def save(self, *args, **kwargs):
-        # Allaqachon tasdiqlangan ishonchli foydalanuvchilar (is_verified=True) yoki admin/moderatorlar e'loni avtomatik approved bo'ladi
+        # Barcha yangi e'lonlar avtomatik ravishda tasdiqlangan (APPROVED) holatda chiqadi
         if not self.pk:
-            author = getattr(self, 'author', None)
-            if not author and self.author_id:
-                from django.contrib.auth import get_user_model
-                author = get_user_model().objects.filter(pk=self.author_id).first()
-            if author and (getattr(author, 'is_verified', False) or getattr(author, 'is_staff', False)):
-                self.moderation_status = self.ModerationStatus.APPROVED
+            self.moderation_status = self.ModerationStatus.APPROVED
+            if not self.moderated_at:
                 self.moderated_at = timezone.now()
         super().save(*args, **kwargs)
 
@@ -188,6 +194,10 @@ class ListingPhoto(models.Model):
         verbose_name = "E'lon rasmi"
         verbose_name_plural = "E'lon rasmlari"
         ordering = ['-is_main', 'id']
+        indexes = [
+            models.Index(fields=['listing_id'], name='photo_listing_idx'),
+            models.Index(fields=['is_main'], name='photo_main_idx'),
+        ]
 
     def __str__(self):
         return f"{self.listing.title} rasmi"

@@ -707,23 +707,34 @@ def process_price_step(message: types.Message):
         return
 
     user_drafts[user_id]["price"] = price
-    render_step_6_gender(message.chat.id)
+    render_step_6_gender(message.chat.id, user_id=user_id)
 
 
-def render_step_6_gender(chat_id, message_id=None):
+def render_step_6_gender(chat_id, user_id=None, message_id=None):
     bot.clear_step_handler_by_chat_id(chat_id)
+    uid = user_id or chat_id
+    draft = user_drafts.get(uid, {})
+    is_need = draft.get("listing_type") == "need_room"
+
     markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        types.InlineKeyboardButton("👨 Faqat erkaklar / yigitlar", callback_data="wiz_gender_male"),
-        types.InlineKeyboardButton("👩 Faqat ayollar / qizlar", callback_data="wiz_gender_female"),
-        types.InlineKeyboardButton("🤝 Farqi yo'q", callback_data="wiz_gender_any"),
-    )
+    if is_need:
+        markup.add(
+            types.InlineKeyboardButton("👨 Yigit kishiman / Erkak", callback_data="wiz_gender_male"),
+            types.InlineKeyboardButton("👩 Qiz bolaman / Ayol", callback_data="wiz_gender_female"),
+        )
+        text = "👤 <b>6-bosqich:</b> O'zingizning jinsingizni tanlang:\n\n<i>(Kvartira egalari va sheriklar sizni to'g'ri topishi uchun o'z jinsingizni ko'rsating)</i>"
+    else:
+        markup.add(
+            types.InlineKeyboardButton("👨 Faqat erkaklar / yigitlar", callback_data="wiz_gender_male"),
+            types.InlineKeyboardButton("👩 Faqat ayollar / qizlar", callback_data="wiz_gender_female"),
+            types.InlineKeyboardButton("🤝 Farqi yo'q", callback_data="wiz_gender_any"),
+        )
+        text = "👥 <b>6-bosqich:</b> Kimlar uchun mo'ljallangan (Sherik talabi)?"
+
     markup.row(
         types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_price"),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
-
-    text = "👥 <b>6-bosqich:</b> Kim uchun afzallik beriladi?"
     if message_id:
         try:
             bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup)
@@ -1010,7 +1021,7 @@ def handle_back_to_residents(call: types.CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_gender")
 def handle_back_to_gender(call: types.CallbackQuery):
     bot.clear_step_handler_by_chat_id(call.message.chat.id)
-    render_step_6_gender(call.message.chat.id, message_id=call.message.message_id)
+    render_step_6_gender(call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_amenities_done")
@@ -1459,12 +1470,18 @@ def render_step_12_confirm(chat_id, user_id, message_id=None):
     city_name = draft.get("city_name") or dict(CITIES).get(draft.get("city_id", 1), "Toshkent")
     price_disp = format_price_display(draft.get("price", 0), draft.get("currency", "USD"))
 
-    gender_map = {
-        "male": "👨 Faqat o'g'il bolalar / erkaklar",
-        "female": "👩 Faqat qizlar / ayollar",
-        "any": "🤝 Farqi yo'q"
-    }
-    gender_disp = gender_map.get(draft.get("gender_preference"), "Farqi yo'q")
+    is_have = draft.get("listing_type") == "have_room"
+    if is_have:
+        gender_map = {
+            "male": "👨 Faqat o'g'il bolalar / erkaklar",
+            "female": "👩 Faqat qizlar / ayollar",
+            "any": "🤝 Farqi yo'q"
+        }
+        gender_disp = gender_map.get(draft.get("gender_preference"), "Farqi yo'q")
+        gender_line = f"👥 <b>Kim uchun:</b> {gender_disp}"
+    else:
+        gender_disp = "👨 Yigit kishi" if draft.get("gender_preference") == "male" else ("👩 Qiz bola" if draft.get("gender_preference") == "female" else "Kiritilmagan")
+        gender_line = f"👤 <b>Qidiruvchining jinsi:</b> {gender_disp}"
 
     amenities = draft.get("amenities", [])
     amenities_disp = ", ".join(amenities) if amenities else "Kiritilmadi"
@@ -1488,7 +1505,7 @@ def render_step_12_confirm(chat_id, user_id, message_id=None):
         f"📌 <b>E'lon turi:</b> {type_name}\n"
         f"📍 <b>Shahar:</b> {city_name}\n"
         f"💰 <b>Narxi:</b> {price_disp}\n"
-        f"👥 <b>Kim uchun:</b> {gender_disp}\n"
+        f"{gender_line}\n"
         f"👥 <b>Talab qilinadigan sherik:</b> {draft.get('capacity', 1)} nafar\n"
         f"🏠 <b>Kvartirada jami yashovchilar:</b> {draft.get('total_residents', 2)} kishi\n"
         f"🚇 <b>Yaqin metro:</b> {metro_disp}\n"

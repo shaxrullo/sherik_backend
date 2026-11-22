@@ -62,6 +62,15 @@ class Report(models.Model):
         verbose_name = "Shikoyat"
         verbose_name_plural = "Shikoyatlar"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['created_at'], name='report_created_idx'),
+            models.Index(fields=['status'], name='report_status_idx'),
+            models.Index(fields=['reporter_id'], name='report_reporter_idx'),
+            models.Index(fields=['reported_listing_id'], name='report_listing_idx'),
+            models.Index(fields=['reported_user_id'], name='report_user_idx'),
+            models.Index(fields=['reviewed_by_id'], name='report_reviewer_idx'),
+            models.Index(fields=['status', 'created_at'], name='report_status_created_idx'),
+        ]
 
     def __str__(self):
         target = f"E'lon #{self.reported_listing_id}" if self.reported_listing_id else f"User #{self.reported_user_id}"
