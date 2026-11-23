@@ -2374,5 +2374,9 @@ def handle_help_callback(call: types.CallbackQuery):
 if __name__ == "__main__":
     threading.Thread(target=_keep_alive_loop, daemon=True).start()
     print("🤖 @SheriktopishBot ishga tushmoqda...")
+    try:
+        bot.delete_webhook(drop_pending_updates=True)
+    except Exception as _e:
+        print(f"Webhook tozalashda ogohlantirish: {_e}")
     bot.infinity_polling(skip_pending=True)
 

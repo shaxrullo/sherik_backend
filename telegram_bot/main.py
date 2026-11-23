@@ -43,7 +43,12 @@ async def main():
 
     logger.info("🤖 @SheriktopishBot ishga tushdi!")
 
-    # Polling bilan ishlatish (Render uchun webhook ham qo'llab-quvvatlanadi)
+    # Polling bilan ishlatish (eski webhooklarni tozalash)
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        logger.warning(f"Webhook tozalashda ogohlantirish: {e}")
+
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
