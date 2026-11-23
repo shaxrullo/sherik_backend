@@ -134,38 +134,29 @@ def auto_answer_callback(bot_instance, call):
 
 
 def get_main_menu_keyboard():
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup(row_width=1)
     btn_webapp = types.InlineKeyboardButton(
-        text="📱 Ilova",
+        text="🚀 Ilovani ochish",
         web_app=types.WebAppInfo(url=MINI_APP_URL)
     )
-    btn_new = types.InlineKeyboardButton(text="📋 E'lon joylash", callback_data="btn_new_listing")
-    btn_browse = types.InlineKeyboardButton(text="🔍 E'lonlar", callback_data="btn_browse_listings")
-    btn_my = types.InlineKeyboardButton(text="👤 Mening e'lonlarim", callback_data="btn_my_listings")
-    btn_help = types.InlineKeyboardButton(text="ℹ️ Yordam", callback_data="btn_help")
+    btn_new = types.InlineKeyboardButton(
+        text="📋 E'lon joylash (Ilovada)",
+        web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/listings/new")
+    )
+    btn_browse = types.InlineKeyboardButton(
+        text="🔍 E'lonlar (Ilovada)",
+        web_app=types.WebAppInfo(url=MINI_APP_URL)
+    )
+    btn_my = types.InlineKeyboardButton(
+        text="👤 Mening e'lonlarim",
+        web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/my/listings")
+    )
 
     markup.add(btn_webapp)
-    markup.add(btn_new, btn_browse)
-    markup.add(btn_my, btn_help)
+    markup.add(btn_new)
+    markup.add(btn_browse)
+    markup.add(btn_my)
     return markup
-
-
-def check_user_registration(tg_user):
-    """Foydalanuvchi bazada telefon raqami bilan ro'yxatdan o'tganligini tekshiradi."""
-    try:
-        auth_data = {
-            "telegram_id": tg_user.id,
-            "first_name": tg_user.first_name or "",
-            "last_name": tg_user.last_name or "",
-            "username": tg_user.username or ""
-        }
-        resp = requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=10)
-        if resp.status_code == 200:
-            user_info = resp.json().get("user", {})
-            return user_info.get("phone_number")
-    except Exception:
-        pass
-    return None
 
 
 @bot.message_handler(commands=['start', 'menu'])
@@ -184,30 +175,12 @@ def handle_start(message: types.Message):
         pass
 
     user_name = message.from_user.first_name or "Foydalanuvchi"
-    phone = check_user_registration(message.from_user)
-
-    if not phone:
-        # Yangi foydalanuvchi: Ro'yxatdan o'tishni so'raymiz
-        reg_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        reg_markup.add(types.KeyboardButton("📱 Telefon raqamimni yuborish", request_contact=True))
-        reg_markup.add(types.KeyboardButton("⏭️ Keyinroq kiritish"))
-
-        text = (
-            f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
-            f"<b>Sherik Topish</b> rasmiy botiga xush kelibsiz!\n\n"
-            f"Xizmatdan to'liq foydalanish, e'lonlar joylashtirish va Ilovadan foydalanish uchun, iltimos, <b>ro'yxatdan o'ting</b>.\n\n"
-            f"Buning uchun pastdagi <b>«📱 Telefon raqamimni yuborish»</b> tugmasini bosing:"
-        )
-        msg = bot.send_message(message.chat.id, text, reply_markup=reg_markup)
-        bot.register_next_step_handler(msg, process_start_registration)
-        return
-
-    # Ro'yxatdan o'tgan foydalanuvchi uchun asosiy menyu
     text = (
         f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
-        f"<b>Sherik Topish</b> rasmiy botiga xush kelibsiz.\n"
-        f"Hisobingiz: 📱 <b>{phone}</b>\n\n"
-        f"Pastdagi tugmalar orqali kerakli bo'limni tanlang:"
+        f"<b>Sherik Topish</b> rasmiy botiga xush kelibsiz.\n\n"
+        f"Xavfsizlik va qulaylik uchun botga to'g'ridan-to'g'ri xabar yozish o'chirilgan. "
+        f"Barcha xizmatlar (e'lon berish, xona qidirish, sherik topish) zamonaviy <b>«📱 Ilova»</b> orqali amalga oshiriladi.\n\n"
+        f"Xizmatdan foydalanish uchun pastdagi <b>«🚀 Ilovani ochish»</b> tugmasini bosing:"
     )
     bot.send_message(
         chat_id=message.chat.id,
@@ -216,95 +189,31 @@ def handle_start(message: types.Message):
     )
 
 
-@bot.message_handler(commands=['restart', 'register'])
-def handle_restart_registration(message: types.Message):
+@bot.message_handler(func=lambda message: True, content_types=['text', 'photo', 'video', 'document', 'audio', 'voice', 'location', 'contact', 'sticker'])
+def handle_all_messages_blocked(message: types.Message):
+    """Botga yozishni hammaga (shu jumladan adminga ham) o'chirib qo'yish."""
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    try:
-        requests.post(
-            f"{API_BASE_URL}/auth/telegram/",
-            json={"telegram_id": message.from_user.id, "reset_phone": True},
-            timeout=10
-        )
-    except Exception:
-        pass
 
-    user_name = message.from_user.first_name or "Foydalanuvchi"
-    reg_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    reg_markup.add(types.KeyboardButton("📱 Telefon raqamimni yuborish", request_contact=True))
-    reg_markup.add(types.KeyboardButton("⏭️ Keyinroq kiritish"))
-
-    text = (
-        f"Assalomu alaykum, <b>{user_name}</b>! 👋\n\n"
-        f"<b>Sherik Topish</b> botida ro'yxatdan o'tish:\n\n"
-        f"Iltimos, pastdagi <b>«📱 Telefon raqamimni yuborish»</b> tugmasini bosing:"
-    )
-    msg = bot.send_message(message.chat.id, text, reply_markup=reg_markup)
-    bot.register_next_step_handler(msg, process_start_registration)
-
-
-def process_start_registration(message: types.Message):
-    user_name = message.from_user.first_name or "Foydalanuvchi"
-    phone = None
-
-    if message.contact:
-        phone = message.contact.phone_number
-        if not phone.startswith("+"):
-            phone = "+" + phone
-    elif message.text:
-        text = message.text.strip()
-        if text in ["⏭️ Keyinroq kiritish", "/skip"]:
-            bot.send_message(
-                message.chat.id,
-                "Tushunarli. Asosiy menyu:",
-                reply_markup=types.ReplyKeyboardRemove()
-            )
-            bot.send_message(
-                message.chat.id,
-                "Pastdagi tugmalar orqali kerakli bo'limni tanlang:",
-                reply_markup=get_main_menu_keyboard()
-            )
-            return
-        # Raqam tekshiruvi
-        raw = "".join(c for c in text if c.isdigit() or c == "+")
-        if len(raw) >= 9:
-            phone = raw if raw.startswith("+") else "+" + raw
-
-    if not phone:
-        reg_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        reg_markup.add(types.KeyboardButton("📱 Telefon raqamimni yuborish", request_contact=True))
-        reg_markup.add(types.KeyboardButton("⏭️ Keyinroq kiritish"))
-        msg = bot.send_message(
-            message.chat.id,
-            "❌ Iltimos, ro'yxatdan o'tish uchun pastdagi <b>«📱 Telefon raqamimni yuborish»</b> tugmasini bosing yoki raqamingizni to'liq yozing (+998901234567):",
-            reply_markup=reg_markup
-        )
-        bot.register_next_step_handler(msg, process_start_registration)
+    if message.text and message.text.strip().startswith(('/start', '/menu')):
+        handle_start(message)
         return
 
-    # Backend ga telefon raqam bilan ro'yxatdan o'tkazish
-    try:
-        auth_data = {
-            "telegram_id": message.from_user.id,
-            "first_name": message.from_user.first_name or "",
-            "last_name": message.from_user.last_name or "",
-            "username": message.from_user.username or "",
-            "phone_number": phone
-        }
-        requests.post(f"{API_BASE_URL}/auth/telegram/", json=auth_data, timeout=10)
-    except Exception:
-        pass
-
-    bot.send_message(
-        message.chat.id,
-        f"✅ <b>Tabriklaymiz, {user_name}!</b>\n"
-        f"Telefon raqamingiz tasdiqlandi va siz muvaffaqiyatli ro'yxatdan o'tdingiz! 🎉\n\n"
-        f"Endi bemalol e'lonlar joylashtirishingiz va Ilovadan foydalanishingiz mumkin.",
-        reply_markup=types.ReplyKeyboardRemove()
+    text = (
+        "🚫 <b>Botga to'g'ridan-to'g'ri xabar yozish o'chirilgan!</b>\n\n"
+        "Sherik topish, barcha e'lonlarni ko'rish va yangi e'lon berish faqat <b>«📱 Ilova»</b> orqali amalga oshiriladi.\n\n"
+        "Iltimos, pastdagi tugmani bosing:"
+    )
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton(
+            text="📱 Ilovani ochish",
+            web_app=types.WebAppInfo(url=MINI_APP_URL)
+        )
     )
     bot.send_message(
-        message.chat.id,
-        "Pastdagi tugmalar orqali kerakli bo'limni tanlang:",
-        reply_markup=get_main_menu_keyboard()
+        chat_id=message.chat.id,
+        text=text,
+        reply_markup=markup
     )
 
 
@@ -312,14 +221,8 @@ def process_start_registration(message: types.Message):
 def handle_help(message: types.Message):
     text = (
         "ℹ️ <b>Sherik Bot bo'yicha ko'rsatmalar:</b>\n\n"
-        "• <b>📱 Ilova</b> — Ilovani to'g'ridan-to'g'ri Telegram ichida ochadi.\n"
-        "• <b>📋 E'lon joylash</b> — Bot orqali tezda e'lon joylashtirish.\n"
-        "• <b>🔍 E'lonlar</b> — Barcha tasdiqlangan e'lonlarni ko'rish.\n\n"
-        "Buyruqlar:\n"
-        "/start — Bosh menyu\n"
-        "/new — Yangi e'lon berish\n"
-        "/listings — E'lonlarni ko'rish\n"
-        "/help — Yordam"
+        "Barcha xizmatlar, e'lonlar va qidiruv rasmiy <b>«📱 Ilova»</b> orqali amalga oshiriladi.\n\n"
+        "Ilovani ochish uchun pastdagi tugmani bosing:"
     )
     bot.send_message(message.chat.id, text, reply_markup=get_main_menu_keyboard())
 
