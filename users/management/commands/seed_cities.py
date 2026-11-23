@@ -6,7 +6,7 @@ CITIES_DATA = {
     "Toshkent": [
         "Yunusobod", "Chilonzor", "Yakkasaroy", "Mirzo Ulug'bek",
         "Shayxontohur", "Uchtepa", "Olmazor", "Bektemir",
-        "Sergeli", "Yangihayot", "Mirobod", "Hamza"
+        "Sergeli", "Yangihayot", "Mirobod", "Yashnobod"
     ],
     "Samarqand": [
         "Samarqand shahri", "Urgut", "Bulungur", "Kattaqo'rg'on",

@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
-from .models import User, LifestylePreference
+from .models import User, LifestylePreference, City, District
 from .serializers import (
     UserRegistrationSerializer,
     CustomTokenObtainPairSerializer,
@@ -201,4 +201,29 @@ class TelegramAuthView(APIView):
                 'is_superuser': user.is_superuser,
             }
         }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Locations'],
+    summary="Shaharlar va tumanlar ro'yxati",
+    description="Barcha faol shaharlar va ularning tumanlari ro'yxatini qaytaradi.",
+)
+class CityListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        cities = City.objects.filter(is_active=True).prefetch_related('districts').order_by('id')
+        data = []
+        for city in cities:
+            districts = [
+                {'id': d.id, 'name': d.name}
+                for d in city.districts.filter(is_active=True).order_by('id')
+            ]
+            data.append({
+                'id': city.id,
+                'name': city.name,
+                'slug': city.slug,
+                'districts': districts,
+            })
+        return Response(data, status=status.HTTP_200_OK)
 

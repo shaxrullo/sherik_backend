@@ -43,6 +43,71 @@ CITIES = [
     (13, "Qoraqalpog'iston")
 ]
 
+CITY_DISTRICTS = {
+    1: [
+        (1, "Yunusobod"), (2, "Chilonzor"), (3, "Yakkasaroy"), (4, "Mirzo Ulug'bek"),
+        (5, "Shayxontohur"), (6, "Uchtepa"), (7, "Olmazor"), (8, "Bektemir"),
+        (9, "Sergeli"), (10, "Yangihayot"), (11, "Mirobod"), (12, "Yashnobod")
+    ],
+    2: [
+        (13, "Samarqand shahri"), (14, "Urgut"), (15, "Bulungur"), (16, "Kattaqo'rg'on"),
+        (17, "Narpay"), (18, "Paxtachi"), (19, "Payariq"), (20, "Pastdarg'om")
+    ],
+    3: [
+        (21, "Buxoro shahri"), (22, "G'ijduvon"), (23, "Kogon"), (24, "Qorovulbozor"),
+        (25, "Romitan"), (26, "Shofirkon"), (27, "Vobkent")
+    ],
+    4: [
+        (28, "Andijon shahri"), (29, "Asaka"), (30, "Baliqchi"), (31, "Bo'z"),
+        (32, "Jalaquduq"), (33, "Marhamat"), (34, "Oltinkul"), (35, "Paxtaobod"),
+        (36, "Qo'rg'ontepa"), (37, "Shahrixon"), (38, "Xo'jaobod")
+    ],
+    5: [
+        (39, "Namangan shahri"), (40, "Chortoq"), (41, "Chust"), (42, "Kosonsoy"),
+        (43, "Mingbuloq"), (44, "Norin"), (45, "Pop"), (46, "To'raqo'rg'on"),
+        (47, "Uchqo'rg'on"), (48, "Uychi"), (49, "Yangiqo'rg'on")
+    ],
+    6: [
+        (50, "Farg'ona shahri"), (51, "Beshariq"), (52, "Bog'dod"), (53, "Buvayda"),
+        (54, "Dang'ara"), (55, "Furqat"), (56, "Qo'shtepa"), (57, "Quva"),
+        (58, "Rishton"), (59, "So'x"), (60, "Toshloq"), (61, "Uchko'prik"), (62, "Yozyovon")
+    ],
+    7: [
+        (63, "Qarshi"), (64, "Chiroqchi"), (65, "Dehqonobod"), (66, "G'uzor"),
+        (67, "Kamashi"), (68, "Kasbi"), (69, "Kitob"), (70, "Koson"),
+        (71, "Mirishkor"), (72, "Muborak"), (73, "Nishon"), (74, "Shahrisabz")
+    ],
+    8: [
+        (75, "Termiz"), (76, "Angor"), (77, "Bandixon"), (78, "Boysun"),
+        (79, "Denov"), (80, "Jarqo'rg'on"), (81, "Qiziriq"), (82, "Qumqo'rg'on"),
+        (83, "Muzrabot"), (84, "Oltinsoy"), (85, "Sariosiyo"), (86, "Sherobod"), (87, "Uzun")
+    ],
+    9: [
+        (88, "Urganch"), (89, "Bog'ot"), (90, "Gurlan"), (91, "Xonqa"),
+        (92, "Xiva"), (93, "Hazorasp"), (94, "Shovot"), (95, "Tuproqqal'a"),
+        (96, "Yangiariq"), (97, "Yangibozor")
+    ],
+    10: [
+        (98, "Jizzax shahri"), (99, "Arnasoy"), (100, "Baxmal"), (101, "Do'stlik"),
+        (102, "Forish"), (103, "G'allaorol"), (104, "Mirzacho'l"), (105, "Paxtakor"),
+        (106, "Sharof Rashidov"), (107, "Yangiobod"), (108, "Zafarobod")
+    ],
+    11: [
+        (109, "Guliston"), (110, "Boyovut"), (111, "Mirzaobod"), (112, "Oqoltin"),
+        (113, "Sardoba"), (114, "Sayxunobod"), (115, "Shirin"), (116, "Xovos")
+    ],
+    12: [
+        (117, "Navoiy shahri"), (118, "Karmana"), (119, "Konimex"), (120, "Navbahor"),
+        (121, "Nurota"), (122, "Tomdi"), (123, "Uchquduq"), (124, "Xatirchi"), (125, "Zarafshon")
+    ],
+    13: [
+        (126, "Nukus"), (127, "Amudaryo"), (128, "Beruniy"), (129, "Chimboy"),
+        (130, "Ellikkala"), (131, "Kegeyli"), (132, "Mo'ynoq"), (133, "Nukus tumani"),
+        (134, "Qanliko'l"), (135, "Qo'ng'irot"), (136, "Shumanay"), (137, "Taxtako'pir"),
+        (138, "To'rtko'l"), (139, "Xo'jayli")
+    ]
+}
+
 # Vaqtinchalik foydalanuvchi ma'lumotlari saqlash (state)
 user_drafts = {}
 
@@ -347,11 +412,17 @@ def handle_browse_listings(update):
             total = data.get("count", 0)
 
             if not results:
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                markup.add(
+                    types.InlineKeyboardButton("📍 Tuman bo'yicha filter", callback_data="browse_filter_city"),
+                    types.InlineKeyboardButton("📋 Birinchi bo'lib e'lon joylash", callback_data="btn_new_listing"),
+                    types.InlineKeyboardButton("🏠 Asosiy menyu", callback_data="btn_back_to_menu")
+                )
                 bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=wait_msg.message_id,
                     text="📭 Hozircha e'lonlar mavjud emas.\nBirinchi bo'lib e'lon joylang!",
-                    reply_markup=get_main_menu_keyboard()
+                    reply_markup=markup
                 )
                 return
 
@@ -364,6 +435,14 @@ def handle_browse_listings(update):
                 gender_map = {"male": "👨 Faqat erkaklar", "female": "👩 Faqat ayollar", "any": "🤝 Farqi yo'q"}
                 gender_str = gender_map.get(item.get("gender_preference"), "Farqi yo'q")
                 city = item.get("city_name") or "O'zbekiston"
+                district = item.get("district_name")
+                addr = item.get("address_line")
+                loc_parts = [city]
+                if district:
+                    loc_parts.append(district)
+                if addr:
+                    loc_parts.append(addr)
+                loc_str = " • ".join(loc_parts)
 
                 price_str = format_price_display(item.get("price", 0), item.get("currency", "USD"))
                 metro_str = f"\n🚇 <b>Metro:</b> {item.get('near_subway')}" if item.get('near_subway') else ""
@@ -375,7 +454,7 @@ def handle_browse_listings(update):
                 card = (
                     f"<b>{item.get('title')}</b>\n\n"
                     f"📌 <b>Turi:</b> {type_icon}\n"
-                    f"📍 <b>Shahar:</b> {city}\n"
+                    f"📍 <b>Joylashuv:</b> {loc_str}\n"
                     f"💰 <b>Narxi:</b> {price_str}\n"
                     f"👥 <b>Kimga:</b> {gender_str}{metro_str}{unis_str}{amenities_text}\n\n"
                     f"<i>ID: #{item.get('id')}</i>"
@@ -397,7 +476,16 @@ def handle_browse_listings(update):
                     bot.send_message(chat_id, card, reply_markup=item_markup)
 
             # Tugatish tugmasi
-            bot.send_message(chat_id, "Ko'proq e'lonlarni ilovada ko'rishingiz mumkin:", reply_markup=get_main_menu_keyboard())
+            end_markup = types.InlineKeyboardMarkup(row_width=2)
+            end_markup.add(
+                types.InlineKeyboardButton("📍 Tuman bo'yicha filter", callback_data="browse_filter_city"),
+                types.InlineKeyboardButton("📋 E'lon joylash", callback_data="btn_new_listing")
+            )
+            end_markup.add(
+                types.InlineKeyboardButton("📱 Ilovada ko'proq ko'rish", web_app=types.WebAppInfo(url=MINI_APP_URL)),
+                types.InlineKeyboardButton("🏠 Asosiy menyu", callback_data="btn_back_to_menu")
+            )
+            bot.send_message(chat_id, "Qidiruvni davom ettirish yoki ilovada to'liq ko'rish:", reply_markup=end_markup)
 
         else:
             bot.edit_message_text(
@@ -415,6 +503,147 @@ def handle_browse_listings(update):
         )
 
 
+@bot.callback_query_handler(func=lambda call: call.data == "browse_filter_city")
+def handle_browse_filter_city(call: types.CallbackQuery):
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    buttons = [types.InlineKeyboardButton(name, callback_data=f"bfilt_city_{cid}") for cid, name in CITIES]
+    markup.add(*buttons)
+    markup.add(types.InlineKeyboardButton("⬅️ E'lonlarga qaytish", callback_data="btn_browse_listings"))
+
+    text = "📍 <b>Qaysi shahardan e'lon qidiryapsiz?</b>"
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=markup)
+    except Exception:
+        bot.send_message(call.message.chat.id, text, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("bfilt_city_"))
+def handle_browse_filter_district(call: types.CallbackQuery):
+    cid = int(call.data.replace("bfilt_city_", ""))
+    city_name = dict(CITIES).get(cid, "Toshkent")
+    districts = CITY_DISTRICTS.get(cid, [])
+
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    buttons = [types.InlineKeyboardButton(name, callback_data=f"bfilt_dist_{cid}_{did}") for did, name in districts]
+    markup.add(*buttons)
+    markup.add(
+        types.InlineKeyboardButton(f"🏙 {city_name} barcha e'lonlari", callback_data=f"bfilt_all_{cid}"),
+        types.InlineKeyboardButton("⬅️ Shaharlarga qaytish", callback_data="browse_filter_city")
+    )
+
+    text = f"📍 <b>{city_name} — Qaysi tumandan sherik / kvartira qidiryapsiz?</b>"
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=markup)
+    except Exception:
+        bot.send_message(call.message.chat.id, text, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("bfilt_dist_") or call.data.startswith("bfilt_all_"))
+def handle_browse_district_results(call: types.CallbackQuery):
+    chat_id = call.message.chat.id
+
+    if call.data.startswith("bfilt_all_"):
+        cid = int(call.data.replace("bfilt_all_", ""))
+        did = None
+        city_name = dict(CITIES).get(cid, "Toshkent")
+        district_name = None
+        params = {"city": cid}
+        heading = f"🏙 <b>{city_name}</b> bo'yicha e'lonlar:"
+    else:
+        parts = call.data.replace("bfilt_dist_", "").split("_")
+        cid = int(parts[0])
+        did = int(parts[1])
+        city_name = dict(CITIES).get(cid, "Toshkent")
+        districts_map = dict(CITY_DISTRICTS.get(cid, []))
+        district_name = districts_map.get(did, "Tuman")
+        params = {"city": cid, "district": did}
+        heading = f"📍 <b>{city_name}, {district_name} tumani</b> bo'yicha e'lonlar:"
+
+    wait_msg = bot.send_message(chat_id, "🔍 E'lonlar qidirilmoqda...")
+    try:
+        resp = requests.get(f"{API_BASE_URL}/listings/", params=params, timeout=15)
+        safe_delete_message(chat_id, wait_msg.message_id)
+
+        if resp.status_code == 200:
+            data = resp.json()
+            results = data.get("results", [])
+            total = data.get("count", 0)
+
+            if not results:
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                markup.add(
+                    types.InlineKeyboardButton("📍 Boshqa tuman tanlash", callback_data=f"bfilt_city_{cid}"),
+                    types.InlineKeyboardButton("📋 Bu tumanga e'lon joylash", callback_data="btn_new_listing"),
+                    types.InlineKeyboardButton("🏠 Barcha e'lonlar", callback_data="btn_browse_listings")
+                )
+                bot.send_message(
+                    chat_id=chat_id,
+                    text=f"📭 <b>{district_name or city_name}</b> bo'yicha hozircha e'lonlar topilmadi.\n\nBirinchi bo'lib e'lon joylashingiz yoki boshqa hududni tanlashingiz mumkin:",
+                    reply_markup=markup
+                )
+                return
+
+            bot.send_message(chat_id, f"{heading}\n(Jami {total} ta e'lon topildi)")
+
+            for item in results[:5]:
+                type_icon = "🏠 Xonam bor" if item.get("listing_type") == "have_room" else "🔍 Xona kerak"
+                gender_map = {"male": "👨 Faqat erkaklar", "female": "👩 Faqat ayollar", "any": "🤝 Farqi yo'q"}
+                gender_str = gender_map.get(item.get("gender_preference"), "Farqi yo'q")
+                city = item.get("city_name") or city_name
+                district = item.get("district_name") or district_name
+                addr = item.get("address_line")
+                loc_parts = [city]
+                if district:
+                    loc_parts.append(district)
+                if addr:
+                    loc_parts.append(addr)
+                loc_str = " • ".join(loc_parts)
+
+                price_str = format_price_display(item.get("price", 0), item.get("currency", "USD"))
+                metro_str = f"\n🚇 <b>Metro:</b> {item.get('near_subway')}" if item.get('near_subway') else ""
+                unis_list = item.get("nearby_universities", [])
+                unis_str = f"\n🎓 <b>OTM:</b> {', '.join(unis_list[:3])}" if unis_list else ""
+                amenities_list = item.get("amenities", [])
+                amenities_text = f"\n🛋 <b>Jihozlar:</b> {', '.join(amenities_list[:4])}" if amenities_list else ""
+
+                card = (
+                    f"<b>{item.get('title')}</b>\n\n"
+                    f"📌 <b>Turi:</b> {type_icon}\n"
+                    f"📍 <b>Joylashuv:</b> {loc_str}\n"
+                    f"💰 <b>Narxi:</b> {price_str}\n"
+                    f"👥 <b>Kimga:</b> {gender_str}{metro_str}{unis_str}{amenities_text}\n\n"
+                    f"<i>ID: #{item.get('id')}</i>"
+                )
+
+                item_markup = types.InlineKeyboardMarkup()
+                item_markup.add(types.InlineKeyboardButton(
+                    text="📱 Ilovada ko'rish",
+                    web_app=types.WebAppInfo(url=f"{MINI_APP_URL}/listings/{item.get('id')}")
+                ))
+
+                main_photo = item.get("main_photo")
+                if main_photo:
+                    try:
+                        bot.send_photo(chat_id, photo=main_photo, caption=card, reply_markup=item_markup)
+                    except Exception:
+                        bot.send_message(chat_id, card, reply_markup=item_markup)
+                else:
+                    bot.send_message(chat_id, card, reply_markup=item_markup)
+
+            end_markup = types.InlineKeyboardMarkup(row_width=2)
+            end_markup.add(
+                types.InlineKeyboardButton("📍 Boshqa tuman tanlash", callback_data=f"bfilt_city_{cid}"),
+                types.InlineKeyboardButton("🏠 Barcha e'lonlar", callback_data="btn_browse_listings")
+            )
+            bot.send_message(chat_id, "Boshqa hududlarni qidirish:", reply_markup=end_markup)
+
+        else:
+            bot.send_message(chat_id, "❌ E'lonlarni yuklashda xatolik yuz berdi.", reply_markup=get_main_menu_keyboard())
+    except Exception as e:
+        safe_delete_message(chat_id, wait_msg.message_id)
+        bot.send_message(chat_id, f"❌ Xatolik: {e}", reply_markup=get_main_menu_keyboard())
+
+
 # ==================== E'LON JOYLASH (WIZARD) ====================
 
 def init_user_draft(user):
@@ -424,6 +653,11 @@ def init_user_draft(user):
         "first_name": user.first_name or "",
         "last_name": user.last_name or "",
         "username": user.username or "",
+        "city_id": 1,
+        "city_name": "Toshkent",
+        "district_id": None,
+        "district_name": "",
+        "address_line": "",
         "capacity": 1,
         "total_residents": 2,
         "amenities": [],
@@ -511,26 +745,182 @@ def handle_city_selection(call: types.CallbackQuery):
 
     user_drafts[user_id]["city_id"] = city_id
     user_drafts[user_id]["city_name"] = city_name
+    user_drafts[user_id]["district_id"] = None
+    user_drafts[user_id]["district_name"] = ""
+    user_drafts[user_id]["address_line"] = ""
 
-    render_step_3_title(call.message.chat.id, city_name=city_name)
+    render_step_2b_district(call.message.chat.id, city_id=city_id, city_name=city_name, message_id=call.message.message_id)
 
 
-def render_step_3_title(chat_id, city_name=None):
+def render_step_2b_district(chat_id, city_id, city_name, message_id=None):
     bot.clear_step_handler_by_chat_id(chat_id)
+    districts = CITY_DISTRICTS.get(city_id, [])
     markup = types.InlineKeyboardMarkup(row_width=2)
-    markup.add(
-        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_city"),
+    buttons = [types.InlineKeyboardButton(name, callback_data=f"wiz_dist_{did}") for did, name in districts]
+    markup.add(*buttons)
+    markup.row(types.InlineKeyboardButton("⏭️ Tumanni ko'rsatmaslik", callback_data="wiz_dist_skip"))
+    markup.row(
+        types.InlineKeyboardButton("⬅️ Shaharga qaytish", callback_data="wiz_back_to_city"),
         types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
     )
 
-    city_hint = f"✅ Shahar: <b>{city_name}</b>\n\n" if city_name else ""
+    text = (
+        f"📍 <b>2B-bosqich:</b> Tumanni tanlang ({city_name}):\n\n"
+        f"<i>Kvartira yoki sherik qidirilayotgan tumanni tanlang:</i>"
+    )
+    if message_id:
+        try:
+            bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup)
+            return
+        except Exception:
+            pass
+    bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("wiz_dist_"))
+def handle_district_selection(call: types.CallbackQuery):
+    user_id = call.from_user.id
+    if user_id not in user_drafts:
+        init_user_draft(call.from_user)
+
+    data = call.data.replace("wiz_dist_", "")
+    city_id = user_drafts[user_id].get("city_id", 1)
+    districts_map = dict(CITY_DISTRICTS.get(city_id, []))
+
+    if data == "skip":
+        user_drafts[user_id]["district_id"] = None
+        user_drafts[user_id]["district_name"] = ""
+    else:
+        try:
+            did = int(data)
+            user_drafts[user_id]["district_id"] = did
+            user_drafts[user_id]["district_name"] = districts_map.get(did, "")
+        except ValueError:
+            user_drafts[user_id]["district_id"] = None
+            user_drafts[user_id]["district_name"] = ""
+
+    render_step_2c_address(call.message.chat.id, user_id=user_id)
+
+
+def render_step_2c_address(chat_id, user_id=None):
+    bot.clear_step_handler_by_chat_id(chat_id)
+    uid = user_id or chat_id
+    draft = user_drafts.get(uid, {})
+    city_name = draft.get("city_name") or "Toshkent"
+    district_name = draft.get("district_name") or ""
+    loc_header = f"{city_name}, {district_name}" if district_name else city_name
+
+    loc_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    loc_markup.add(types.KeyboardButton("📍 Lokatsiyamni yuborish (GPS)", request_location=True))
+    loc_markup.add(types.KeyboardButton("⏭️ O'tkazib yuborish"), types.KeyboardButton("⬅️ Orqaga"))
+
+    text = (
+        f"📍 <b>2C-bosqich:</b> Aniq manzil yoki lokatsiya ({loc_header}):\n\n"
+        f"<i>Kvartiraning aniq manzilini yozing (masalan: Chilonzor 9-mavze, 12-uy, mo'ljal: Rayhon) "
+        f"yoki pastdagi <b>«📍 Lokatsiyamni yuborish (GPS)»</b> tugmasini bosing:</i>\n\n"
+        f"<i>Agar aniq manzilni ko'rsatishni istamasangiz, <b>«⏭️ O'tkazib yuborish»</b> tugmasini bosing.</i>"
+    )
+    msg = bot.send_message(chat_id, text, reply_markup=loc_markup)
+    bot.register_next_step_handler(msg, process_address_step)
+
+
+def process_address_step(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in user_drafts:
+        bot.send_message(message.chat.id, "Boshidan boshlang: /new", reply_markup=get_main_menu_keyboard())
+        return
+
+    draft = user_drafts[user_id]
+    city_id = draft.get("city_id", 1)
+    city_name = draft.get("city_name") or dict(CITIES).get(city_id, "Toshkent")
+
+    if message.location:
+        lat = message.location.latitude
+        lon = message.location.longitude
+        addr_line = f"GPS: {lat:.5f}, {lon:.5f}"
+        try:
+            resp = requests.get(
+                f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1",
+                headers={"User-Agent": "SherikBot/1.0"},
+                timeout=5
+            )
+            if resp.status_code == 200:
+                geo_data = resp.json()
+                road = geo_data.get("address", {}).get("road")
+                suburb = geo_data.get("address", {}).get("suburb") or geo_data.get("address", {}).get("residential")
+                if road and suburb:
+                    addr_line = f"{suburb}, {road}"
+                elif geo_data.get("display_name"):
+                    addr_line = ", ".join(geo_data["display_name"].split(",")[:2]).strip()
+        except Exception:
+            pass
+
+        draft["address_line"] = addr_line
+        bot.send_message(message.chat.id, f"✅ Lokatsiya qabul qilindi: <b>{addr_line}</b>", reply_markup=types.ReplyKeyboardRemove())
+        render_step_3_title(message.chat.id, user_id=user_id)
+        return
+
+    text = (message.text or "").strip()
+    if text in ["⬅️ Orqaga", "/back"]:
+        bot.send_message(message.chat.id, "Orqaga qaytildi.", reply_markup=types.ReplyKeyboardRemove())
+        render_step_2b_district(message.chat.id, city_id=city_id, city_name=city_name)
+        return
+
+    if text in ["❌ Bekor qilish", "/cancel"]:
+        bot.send_message(message.chat.id, "Bekor qilindi.", reply_markup=types.ReplyKeyboardRemove())
+        handle_cancel_msg(message)
+        return
+
+    if text in ["⏭️ O'tkazib yuborish", "/skip"]:
+        draft["address_line"] = ""
+        bot.send_message(message.chat.id, "Manzil o'tkazib yuborildi.", reply_markup=types.ReplyKeyboardRemove())
+        render_step_3_title(message.chat.id, user_id=user_id)
+        return
+
+    if len(text) < 3:
+        msg = bot.send_message(
+            message.chat.id,
+            "❌ Manzil juda qisqa. Kamida 3 ta belgi yozing yoki «⏭️ O'tkazib yuborish» tugmasini bosing:"
+        )
+        bot.register_next_step_handler(msg, process_address_step)
+        return
+
+    draft["address_line"] = text
+    bot.send_message(message.chat.id, f"✅ Manzil qabul qilindi: <b>{text}</b>", reply_markup=types.ReplyKeyboardRemove())
+    render_step_3_title(message.chat.id, user_id=user_id)
+
+
+def render_step_3_title(chat_id, user_id=None, city_name=None):
+    bot.clear_step_handler_by_chat_id(chat_id)
+    uid = user_id or chat_id
+    draft = user_drafts.get(uid, {})
+    c_name = draft.get("city_name") or city_name or "Toshkent"
+    d_name = draft.get("district_name") or ""
+    loc_header = f"{c_name}, {d_name}" if d_name else c_name
+    addr = draft.get("address_line")
+    if addr:
+        loc_header += f" ({addr})"
+
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        types.InlineKeyboardButton("⬅️ Orqaga", callback_data="wiz_back_to_address"),
+        types.InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_action")
+    )
+
     msg = bot.send_message(
         chat_id,
-        f"{city_hint}✏️ <b>3-bosqich:</b> E'lon sarlavhasini yozing:\n"
+        f"📍 Joylashuv: <b>{loc_header}</b>\n\n"
+        f"✏️ <b>3-bosqich:</b> E'lon sarlavhasini yozing:\n"
         f"<i>(Masalan: Chilonzorda 2 xonali kvartiraga 1 nafar sherik kerak)</i>",
         reply_markup=markup
     )
     bot.register_next_step_handler(msg, process_title_step)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_address")
+def handle_back_to_address(call: types.CallbackQuery):
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    render_step_2c_address(call.message.chat.id, user_id=call.from_user.id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_city")
@@ -547,7 +937,7 @@ def process_title_step(message: types.Message):
 
     text = (message.text or "").strip()
     if text in ["⬅️ Orqaga", "/back"]:
-        render_step_2_city(message.chat.id)
+        render_step_2c_address(message.chat.id, user_id=user_id)
         return
     if text in ["❌ Bekor qilish", "/cancel"]:
         handle_cancel_msg(message)
@@ -582,7 +972,7 @@ def render_step_4_description(chat_id):
 @bot.callback_query_handler(func=lambda call: call.data == "wiz_back_to_title")
 def handle_back_to_title(call: types.CallbackQuery):
     bot.clear_step_handler_by_chat_id(call.message.chat.id)
-    render_step_3_title(call.message.chat.id)
+    render_step_3_title(call.message.chat.id, user_id=call.from_user.id)
 
 
 def process_description_step(message: types.Message):
@@ -1470,6 +1860,16 @@ def render_step_12_confirm(chat_id, user_id, message_id=None):
 
     type_name = "🏠 Xonam bor (Sherik kerak)" if draft.get("listing_type") == "have_room" else "🔍 Xona kerak (Ijara qidiryapman)"
     city_name = draft.get("city_name") or dict(CITIES).get(draft.get("city_id", 1), "Toshkent")
+    district_name = draft.get("district_name") or ""
+    address_line = draft.get("address_line") or ""
+
+    loc_parts = [city_name]
+    if district_name:
+        loc_parts.append(district_name)
+    if address_line:
+        loc_parts.append(address_line)
+    loc_disp = " • ".join(loc_parts)
+
     price_disp = format_price_display(draft.get("price", 0), draft.get("currency", "USD"))
 
     is_have = draft.get("listing_type") == "have_room"
@@ -1505,7 +1905,7 @@ def render_step_12_confirm(chat_id, user_id, message_id=None):
         f"🏷 <b>Sarlavha:</b> {draft.get('title', '')}\n"
         f"📝 <b>Tavsif:</b> {draft.get('description', '')}\n"
         f"📌 <b>E'lon turi:</b> {type_name}\n"
-        f"📍 <b>Shahar:</b> {city_name}\n"
+        f"📍 <b>Joylashuv:</b> {loc_disp}\n"
         f"💰 <b>Narxi:</b> {price_disp}\n"
         f"{gender_line}\n"
         f"👥 <b>Talab qilinadigan sherik:</b> {draft.get('capacity', 1)} nafar\n"
@@ -1599,6 +1999,8 @@ def handle_confirm_save(call: types.CallbackQuery):
             "description": draft.get("description", "Kvartiraga sherik kerak"),
             "listing_type": draft.get("listing_type", "have_room"),
             "city_id": draft.get("city_id", 1),
+            "district_id": draft.get("district_id"),
+            "address_line": draft.get("address_line", ""),
             "price": int(round(float(draft.get("price", 100)))),
             "currency": draft.get("currency", "USD"),
             "capacity": draft.get("capacity", 1),
@@ -1650,6 +2052,13 @@ def handle_confirm_save(call: types.CallbackQuery):
         if user_id in user_drafts:
             del user_drafts[user_id]
 
+        loc_parts = [draft.get("city_name") or "Toshkent"]
+        if draft.get("district_name"):
+            loc_parts.append(draft["district_name"])
+        if draft.get("address_line"):
+            loc_parts.append(draft["address_line"])
+        loc_disp = " • ".join(loc_parts)
+
         price_disp = format_price_display(listing_payload["price"], listing_payload["currency"])
         amenities_disp = ", ".join(listing_payload["amenities"]) if listing_payload["amenities"] else "Yo'q"
         metro_disp = listing_payload["near_subway"] if listing_payload["near_subway"] else "Yo'q"
@@ -1658,6 +2067,7 @@ def handle_confirm_save(call: types.CallbackQuery):
         success_text = (
             f"🎉 <b>E'loningiz muvaffaqiyatli saqlandi!</b>\n\n"
             f"📋 <b>E'lon raqami:</b> #{listing_id}\n"
+            f"📍 <b>Joylashuv:</b> {loc_disp}\n"
             f"💰 <b>Narx:</b> {price_disp}\n"
             f"🚇 <b>Yaqin metro:</b> {metro_disp}\n"
             f"🎓 <b>Yaqin OTMlar:</b> {unis_disp}\n"
@@ -1764,6 +2174,15 @@ def handle_my_listings(call: types.CallbackQuery):
             st_text = status_map.get(l.get("moderation_status"), l.get("moderation_status"))
 
             city_name = l.get("city_name") or "O'zbekiston"
+            district_name = l.get("district_name")
+            addr_line = l.get("address_line")
+            loc_parts = [city_name]
+            if district_name:
+                loc_parts.append(district_name)
+            if addr_line:
+                loc_parts.append(addr_line)
+            loc_disp = " • ".join(loc_parts)
+
             metro_line = f"\n🚇 <b>Metro:</b> {l.get('near_subway')}" if l.get('near_subway') else ""
             unis = l.get("nearby_universities", [])
             unis_line = f"\n🎓 <b>OTM:</b> {', '.join(unis)}" if unis else ""
@@ -1774,7 +2193,7 @@ def handle_my_listings(call: types.CallbackQuery):
             card_text = (
                 f"<b>{l.get('title')}</b>\n\n"
                 f"📌 <b>Turi:</b> {type_icon}\n"
-                f"📍 <b>Shahar:</b> {city_name}\n"
+                f"📍 <b>Joylashuv:</b> {loc_disp}\n"
                 f"💰 <b>Narxi:</b> {price_disp}\n"
                 f"👥 <b>Talab:</b> {cap} nafar sherik | Jami yashovchilar: {tot} kishi\n"
                 f"📊 <b>Holat:</b> {st_text}{rej_line}"
