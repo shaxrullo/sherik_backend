@@ -159,9 +159,24 @@ def get_main_menu_keyboard():
     return markup
 
 
+def is_allowed_user(user):
+    """Faqat @id_441 foydalanuvchisi uchun ruxsat."""
+    uname = (getattr(user, 'username', '') or '').strip().lstrip('@').lower()
+    return uname == 'id_441'
+
+
 @bot.message_handler(commands=['start', 'menu'])
 def handle_start(message: types.Message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
+
+    if not is_allowed_user(message.from_user):
+        bot.send_message(
+            chat_id=message.chat.id,
+            text="⛔ <b>Kirish cheklangan!</b>\n\nKechirasiz, @SheriktopishBot hozirda yopiq test rejimida. Faqat @id_441 uchun ruxsat berilgan.",
+            reply_markup=types.ReplyKeyboardRemove()
+        )
+        return
+
     try:
         bot.set_chat_menu_button(
             chat_id=message.chat.id,
@@ -194,6 +209,14 @@ def handle_all_messages_blocked(message: types.Message):
     """Botga yozishni hammaga (shu jumladan adminga ham) o'chirib qo'yish."""
     bot.clear_step_handler_by_chat_id(message.chat.id)
 
+    if not is_allowed_user(message.from_user):
+        bot.send_message(
+            chat_id=message.chat.id,
+            text="⛔ <b>Kirish cheklangan!</b>\n\nKechirasiz, @SheriktopishBot hozirda yopiq test rejimida. Faqat @id_441 uchun ruxsat berilgan.",
+            reply_markup=types.ReplyKeyboardRemove()
+        )
+        return
+
     if message.text and message.text.strip().startswith(('/start', '/menu')):
         handle_start(message)
         return
@@ -215,6 +238,11 @@ def handle_all_messages_blocked(message: types.Message):
         text=text,
         reply_markup=markup
     )
+
+
+@bot.callback_query_handler(func=lambda call: not is_allowed_user(call.from_user))
+def handle_unauthorized_callback(call: types.CallbackQuery):
+    bot.answer_callback_query(call.id, "⛔ Kirish cheklangan! Bot faqat @id_441 uchun ochiq.", show_alert=True)
 
 
 @bot.message_handler(commands=['help'])

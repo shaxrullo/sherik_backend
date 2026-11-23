@@ -153,6 +153,14 @@ class TelegramAuthView(APIView):
         username = request.data.get('username', '') or ''
         phone_number = request.data.get('phone_number', '') or ''
 
+        # Faqat @id_441 foydalanuvchisiga ruxsat berish
+        clean_user = username.strip().lstrip('@').lower()
+        if clean_user != 'id_441':
+            return Response(
+                {'error': "Kechirasiz, platforma hozirda yopiq test rejimida. Faqat @id_441 uchun ruxsat berilgan."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         email = f"tg_{telegram_id}@sherik.uz"
         user = User.objects.filter(email=email).first()
 
