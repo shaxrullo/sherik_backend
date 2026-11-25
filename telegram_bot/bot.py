@@ -10,21 +10,11 @@ import requests
 import telebot
 from telebot import types, apihelper
 
+from telegram_bot.config import get_bot_token
+
 apihelper.ENABLE_MIDDLEWARE = True
 
-# Muhit o'zgaruvchilarini yuklash (agar yuklanmagan bo'lsa)
-if not os.environ.get("TELEGRAM_BOT_TOKEN"):
-    try:
-        from pathlib import Path
-        import environ
-        _base_dir = Path(__file__).resolve().parent.parent
-        _env_path = os.path.join(_base_dir, '.env')
-        if os.path.exists(_env_path):
-            environ.Env.read_env(_env_path)
-    except Exception:
-        pass
-
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+BOT_TOKEN = get_bot_token()
 if not BOT_TOKEN or ":" not in BOT_TOKEN:
     import logging
     logging.getLogger(__name__).warning("TELEGRAM_BOT_TOKEN muhit o'zgaruvchisi topilmadi yoki yaroqsiz formatda.")

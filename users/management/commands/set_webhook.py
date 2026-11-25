@@ -1,13 +1,14 @@
 import os
 import telebot
 from django.core.management.base import BaseCommand
+from telegram_bot.config import get_bot_token
 
 
 class Command(BaseCommand):
     help = "Telegram Bot uchun Render Webhookni o'rnatish"
 
     def handle(self, *args, **options):
-        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        token = get_bot_token()
         secret_token = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "sherik_secure_bot_token_2026_webhook")
         webhook_url = "https://sherik-backend.onrender.com/api/v1/telegram-webhook/"
 

@@ -76,6 +76,7 @@ class TelegramWebhookView(View):
                     if update.callback_query.data in ['cancel_action', 'btn_back_to_menu', 'btn_new_listing', 'btn_browse_listings', 'btn_my_listings', 'btn_help']:
                         bot.clear_step_handler_by_chat_id(chat_id)
 
+                bot.threaded = False
                 bot.process_new_updates([update])
         except Exception as e:
             logger.error(f"Telegram webhook xatosi: {e}")
